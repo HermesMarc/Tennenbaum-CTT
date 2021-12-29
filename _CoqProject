@@ -1,0 +1,16 @@
+-R . Tennenbaum
+
+-install none
+COQDOCFLAGS = "--charset utf-8 --parse-comments -s --with-header ../../website/resources/header.html --with-footer ../../website/resources/footer.html --index indexpage"
+
+CantorPairing.v
+Synthetic.v
+DecidabilityFacts.v
+NumberTheory.v
+
+FOL.v
+Deduction.v
+Tarski.v
+
+Peano.v
+Tennenbaum.v
