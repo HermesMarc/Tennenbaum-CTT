@@ -478,7 +478,7 @@ Section Closed.
     intros Dec_α b1%How2.
     induction n as [| n [h|h]].
     - right. cbn -[Q]. apply II. eapply ExE.
-      {apply Ctx; now left. }
+      { apply Ctx; now left. }
       cbn -[Q]. eapply IE.
       { eapply Weak with (A:=Q). apply (not_lt_zero_prv _ $0).
         now do 2 right. }
@@ -494,26 +494,25 @@ Section Closed.
         apply num_add_homomorphism.
         now intros ?. 
       }
-      { right. apply II.
-        eapply ExE; cbn - [Q].
-        { apply Ctx. now left. }
-        pose (ϕ := $0 ⧀ num n ∨ $0 == num n).
-        apply IE with (phi:= ϕ).
-        { apply II. eapply DE.
-          * apply Ctx; now left.
-          * eapply IE.
-            { eapply Weak; [apply h|].
-              do 4 right. now cbn. }
-            eapply ExI with (t:= $0).
-            cbn -[Q]; apply CI.
-            { rewrite !num_subst in *. apply Ctx; now left. }
-            { enough (α[$0..] = α) as ->. 
-              eapply CE2, Ctx.
-              now right; right; left.
-              admit. }
-        }
-        unfold ϕ. 
-      }
+      right. apply II.
+      eapply ExE; cbn - [Q].
+      { apply Ctx. now left. }
+      pose (ϕ := $0 ⧀ num n ∨ $0 == num n).
+      apply IE with (phi:= ϕ).
+      + apply II. eapply DE.
+        * apply Ctx; now left.
+        * eapply IE.
+          { eapply Weak; [apply h|].
+            do 4 right. now cbn. }
+          eapply ExI with (t:= $0).
+          cbn -[Q]; apply CI.
+          { rewrite !num_subst in *. apply Ctx; now left. }
+          enough (α[$0..] = α) as ->. 
+          eapply CE2, Ctx.
+          now right; right; left.
+          admit.
+        * admit.
+      + admit.
   Admitted.
     
 

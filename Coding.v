@@ -494,10 +494,11 @@ Section notStd.
     specialize (H n). rewrite num_subst in H.
     apply H.
     apply Overspill_DN in H'; auto.
-    2 : { repeat solve_bounds.
-          all: eapply bounded_up; try apply binary_alpha; try apply Hψ.
-          all: eauto; try lia.
-          all: admit. }
+    2 : { solve_bounds.
+          all: repeat solve_bounds.
+          2, 3: try eapply bounded_up; try apply binary_alpha; try apply Hψ; lia.
+          all: eapply subst_bound; eauto.
+          all: intros [|[]]; solve_bounds. }
     apply (DN_chaining H'), DN. clear H' H.
       intros (e & He1 & He2). intros b.
       cbn in He2. specialize (He2 (fun _ => i0) b) as [a Ha].
@@ -521,7 +522,7 @@ Section notStd.
       eapply bound_ext. apply Hψ. 2: apply Hk.
       intros [|[]]; try now intros. lia.
       apply Hk.
-  Admitted.
+  Qed.
 
 
 
@@ -546,9 +547,9 @@ Section notStd.
     apply H.
     apply Overspill_DN in H'; auto.
     2 : { repeat solve_bounds.
-          all: eapply bounded_up; try apply binary_alpha; try apply Hψ.
-          all: eauto; try lia.
-          all: admit. }
+          2,3 : eapply bounded_up; try apply binary_alpha; try apply Hψ; try lia.
+          all: eapply subst_bound; eauto.
+          all: intros [|[]]; solve_bounds. }
     rewrite <-NNN_N.
     apply (DN_chaining H'), DN. clear H' H.
       intros (e & He1 & He2).
