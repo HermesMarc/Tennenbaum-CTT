@@ -121,6 +121,16 @@ Section fix_signature.
     | quant op phi => quant op (subst_form (up σ) phi)
     end.
 
+  Fixpoint form_depth `{falsity_flag} phi :=
+    match phi with
+    | falsity => 0
+    | atom P v => 0
+    | bin op phi1 phi2 => S (form_depth phi1 + form_depth phi2)
+    | eq s t => 0
+    | quant op phi => S (form_depth phi)
+    end.
+
+
   (* Induction principle for terms *)
 
   Inductive Forall {A : Type} (P : A -> Type) : forall {n}, t A n -> Type :=
@@ -344,14 +354,14 @@ Section Subst.
   Qed.
 
 
-  Lemma up_decompose {ff : falsity_flag} sigma phi : phi[up (S >> sigma)][(sigma 0)..] = phi[sigma].
+  Lemma up_decompose {ff : falsity_flag} sigma phi : 
+    phi[up (S >> sigma)][(sigma 0)..] = phi[sigma].
   Proof.
     rewrite subst_comp. apply subst_ext.
     intros [].
     - reflexivity.
     - apply subst_term_shift.
   Qed.
-
 
   
 End Subst.

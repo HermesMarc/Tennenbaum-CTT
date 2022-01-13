@@ -484,18 +484,6 @@ Section Models.
       - intros d. now specialize (H d (fun _ => i0)); cbn in *.
     Qed.
 
-
-    Goal forall x y : nat, x = y \/ x <> y.
-    Proof.
-      intros x. induction x.
-      - intros []. auto. auto.
-      - intros [].
-        + right. auto.
-        + destruct (IHx n). auto.
-          right. intros [=<-]. auto.
-    Qed.
-
-
     Lemma eq_dec : forall x y : D, x = y \/ x <> y.
     Proof.
       pose (phi := ∀ $1 == $0 ∨ ($1 == $0 --> ⊥)).
@@ -514,8 +502,6 @@ Section Models.
       - intros x y. 
         now specialize (H x (fun _ => i0) y); cbn in *.
     Qed.
-
-
 
     Lemma sum_is_zero x y : x i⊕ y = i0 -> x = i0 /\ y = i0.
     Proof.
@@ -563,7 +549,6 @@ Section Models.
         now intros ?%IH%succ_inj.
       - now specialize (H t (fun _ => i0) y x); cbn in *.
     Qed.
-
 
 
     Lemma lt_neq x y : x i⧀ y -> x = y -> False.
@@ -733,10 +718,8 @@ Section Models.
       Proof.
         intros x y.
         destruct y as [|y]. lia.
-
         destruct (iEuclid x (inu (S y))) as (a & b & H).
         intros Hy.
-
         enough (Hlt : forall x y, x < y -> inu x i⧀ inu y).
         apply Hlt, H, lessthen_num in Hy.
         destruct Hy as [r [Hr ->]].
@@ -773,25 +756,28 @@ Section StandartModel.
 
 
   (* We now show that there is a model in which all of PA's axioms hold. *)
-  Lemma PA_std_axioms :  
+  Lemma PA_std_axioms :
     forall rho ax, PA ax -> @sat _ _ nat interp_nat _ rho ax. 
   Proof.
     intros rho ax [a H | H].
     repeat (destruct H as [<-| H]); cbn ; try congruence.
-    intros []. auto. right. exists n; auto. firstorder.
-    intros H0 IH. intros d. induction d.
-    - apply sat_single in H0. apply H0.
-    - apply IH in IHd. 
-      eapply sat_comp, sat_ext in IHd.
-      apply IHd. intros []; now cbn.
+    intros []. auto. 
+    - right. exists n; auto. 
+    - destruct H.
+    - intros H0 IH. intros d. induction d.
+      + apply sat_single in H0. apply H0.
+      + apply IH in IHd. 
+        eapply sat_comp, sat_ext in IHd.
+        apply IHd. intros []; now cbn.
   Qed.
 
-  Lemma Q_std_axioms :  
+  Lemma Q_std_axioms :
     forall rho ax, In ax Q -> @sat _ _ nat interp_nat _ rho ax. 
   Proof.
     intros rho ax H.
     repeat (destruct H as [<-| H]); cbn ; try congruence.
-    intros []. auto. right. exists n; auto. firstorder.
+    - intros []; auto. right. exists n; auto. 
+    - destruct H.
   Qed.
 
 
@@ -824,7 +810,8 @@ Section ND.
   Proof. induction n; cbn; now try rewrite IHn. Qed.
 
 
-  Lemma subst_up_var k x sigma : x < k -> (var x)`[iter up k sigma] = var x.
+  Lemma subst_up_var k x sigma :
+    x < k -> (var x)`[iter up k sigma] = var x.
   Proof.
     induction k in x, sigma |-*.
     - now intros ?%PeanoNat.Nat.nlt_0_r.
@@ -839,7 +826,8 @@ Section ND.
   Qed.
 
 
-  Lemma subst_bounded_term t sigma k : bounded_t k t -> t`[iter up k sigma] = t.
+  Lemma subst_bounded_term t sigma k : 
+    bounded_t k t -> t`[iter up k sigma] = t.
   Proof.
     induction 1.
     - now apply subst_up_var.
@@ -849,7 +837,17 @@ Section ND.
   Qed.
 
 
-  Lemma subst_bounded k phi sigma : bounded k phi -> phi[iter up k sigma] = phi.
+  Lemma subst_closed_term t sigma :
+    bounded_t 0 t -> t`[sigma] = t.
+  Proof.
+    intros H0.
+    refine (_ (subst_bounded_term t sigma 0 H0)).
+    now cbn.
+  Qed.
+
+
+  Lemma subst_bounded k phi sigma : 
+    bounded k phi -> phi[iter up k sigma] = phi.
   Proof.
     induction 1 in sigma |-*; cbn.
     - f_equal.
@@ -868,7 +866,8 @@ Section ND.
   Definition exist_times n (phi : form) := iter (fun psi => ∃ psi) n phi.
 
 
-  Lemma up_decompose sigma phi : phi[up (S >> sigma)][(sigma 0)..] = phi[sigma].
+  Lemma up_decompose sigma phi : 
+    phi[up (S >> sigma)][(sigma 0)..] = phi[sigma].
   Proof.
     rewrite subst_comp. apply subst_ext.
     intros [].
@@ -928,26 +927,26 @@ Section Q_prv.
   Lemma reflexivity t : Gamma ⊢ (t == t).
   Proof.
     apply (Weak Q).
-
     pose (sigma := [t] ∗ var ).
     change (Q ⊢ _) with (Q ⊢ ($0 == $0)[sigma]).
-    
     eapply (@subst_forall_prv _ _ 1).
-    apply Ctx. all : firstorder. constructor;
-    repeat solve_bounds.
+    apply Ctx. 
+    - now left.
+    - repeat solve_bounds.
+    - assumption.
   Qed.
 
 
   Lemma symmetry x y : Gamma ⊢ (x == y) -> Gamma ⊢ (y == x).
   Proof.
     apply IE. apply (Weak Q).
-
     pose (sigma := [x ; y] ∗ var ).
     change (Q ⊢ _) with (Q ⊢ ($1 == $0 --> $0 == $1)[sigma]).
-    
     apply (@subst_forall_prv _ _ 2).
-    apply Ctx. all : firstorder;
-    repeat solve_bounds.
+    apply Ctx.
+    - do 1 right; now left.
+    - repeat solve_bounds.
+    - assumption.
   Qed.
 
 
@@ -956,26 +955,26 @@ Section Q_prv.
   Proof.
     intros H. apply IE. revert H; apply IE.
     apply Weak with Q.
-
     pose (sigma := [x ; y ; z] ∗ var).
     change (Q ⊢ _) with (Q ⊢ ($2 == $1 --> $1 == $0 --> $2 == $0)[sigma]).
-    
     apply (@subst_forall_prv _ _ 3).
-    apply Ctx. all : try firstorder;
-    repeat solve_bounds.
+    apply Ctx.
+    - do 2 right; now left.
+    - repeat solve_bounds.
+    - assumption.
   Qed.
 
 
   Lemma eq_succ x y : Gamma ⊢ (x == y) -> Gamma ⊢ (σ x == σ y).
   Proof.
     apply IE. apply Weak with Q.
-
     pose (sigma := [y ; x] ∗ var ).
     change (Q ⊢ _) with (Q ⊢ ($0 == $1 --> σ $0 == σ $1)[sigma]).
-
     apply (@subst_forall_prv _ _ 2).
-    apply Ctx. all : firstorder.
-    repeat solve_bounds.
+    apply Ctx.
+    - do 3 right; now left.
+    - repeat solve_bounds.
+    - assumption.
   Qed.
 
 
@@ -984,13 +983,13 @@ Section Q_prv.
   Proof.
     intros H; apply IE. revert H; apply IE.
     apply Weak with Q.
-
     pose (sigma := [y2 ; y1 ; x2 ; x1] ∗ var).
     change (Q ⊢ _) with (Q ⊢ ($0 == $1 --> $2 == $3 --> $0 ⊕ $2 == $1 ⊕ $3)[sigma]).
-
     apply (@subst_forall_prv _ _ 4).
-    apply Ctx. all: firstorder.
-    repeat solve_bounds.
+    apply Ctx.
+    - do 4 right; now left.
+    - repeat solve_bounds.
+    - assumption.
   Qed.
 
 
@@ -999,26 +998,26 @@ Section Q_prv.
   Proof.
     intros H; apply IE. revert H; apply IE.
     apply Weak with Q.
-    
     pose (sigma := [y2 ; y1 ; x2 ; x1] ∗ var).
     change (Q ⊢ _) with (Q ⊢ ($0 == $1 --> $2 == $3 --> $0 ⊗ $2 == $1 ⊗ $3)[sigma]).
-    
     apply (@subst_forall_prv _ _ 4).
-    apply Ctx. all: firstorder.
-    repeat solve_bounds.
+    apply Ctx.
+    - do 5 right; now left.
+    - repeat solve_bounds.
+    - assumption.
   Qed.
 
 
   Lemma Zero_succ x : Gamma ⊢ ¬ zero == σ x.
   Proof.
     apply Weak with Q.
-
     pose (sigma := [x] ∗ var).
     change (Q ⊢ _) with (Q ⊢ (¬ zero == σ $0)[sigma]).
-
     apply (@subst_forall_prv _ _ 1).
-    apply Ctx. all: firstorder.
-    repeat solve_bounds.
+    apply Ctx.
+    - do 6 right; now left.
+    - repeat solve_bounds.
+    - assumption.
   Qed.
 
 
@@ -1026,13 +1025,13 @@ Section Q_prv.
   Proof.
     intros H; eapply IE. 2: apply H.
     apply Weak with Q.
-
     pose (sigma := [x ; y] ∗ var).
     change (Q ⊢ _) with (Q ⊢ (σ $1 == σ $0 --> $1 == $0)[sigma]).
-
     apply (@subst_forall_prv _ _ 2).
-    apply Ctx. all : firstorder.
-    repeat solve_bounds.
+    apply Ctx.
+    - do 7 right; now left.
+    - repeat solve_bounds.
+    - assumption.
   Qed.
 
 
@@ -1040,13 +1039,13 @@ Section Q_prv.
   Lemma Add_rec x y : Gamma ⊢ ( (σ x) ⊕ y == σ (x ⊕ y) ).
   Proof.
     apply Weak with Q.
-
     pose (sigma := [y ; x] ∗ var).
     change (Q ⊢ _) with (Q ⊢ (σ $0 ⊕ $1 == σ ($0 ⊕ $1))[sigma]).
-
     apply (@subst_forall_prv _ _ 2).
-    apply Ctx. all : firstorder.
-    repeat solve_bounds.
+    apply Ctx. 
+    - do 9 right; now left.
+    - repeat solve_bounds.
+    - assumption.
   Qed.
 
   (** * Homomorphism Properties of Numerals *)
@@ -1057,7 +1056,7 @@ Section Q_prv.
     - pose (phi := zero ⊕ $0 == $0).
       apply (@AllE _ _ _ _ _ _ phi ).
       apply Weak with Q.
-      apply Ctx;firstorder.
+      apply Ctx. do 8 right; now left.
       assumption.
     - eapply transitivity.
       apply Add_rec.
@@ -1068,13 +1067,13 @@ Section Q_prv.
   Lemma Mult_rec x y : Gamma ⊢ ( (σ x) ⊗ y == y ⊕ (x ⊗ y) ).
   Proof.
     apply Weak with Q.
-
     pose (sigma := [x ; y] ∗ var).
     change (Q ⊢ _) with (Q ⊢ ((σ $1) ⊗ $0 == $0 ⊕ ($1 ⊗ $0))[sigma]).
-
     eapply (@subst_forall_prv _ _ 2).
-    apply Ctx. all : firstorder.
-    repeat solve_bounds.
+    apply Ctx. 
+    - do 11 right; now left.
+    - repeat solve_bounds.
+    - assumption. 
   Qed.
 
 
@@ -1083,7 +1082,7 @@ Section Q_prv.
     induction x; cbn.
     - pose (phi := zero ⊗ $0 == zero).
       apply (@AllE _ _ _ _ _ _ phi).
-      apply Weak with Q. apply Ctx; firstorder.
+      apply Weak with Q. apply Ctx; do 10 right; now left.
       assumption.
     - eapply transitivity.
       apply Mult_rec.
@@ -1099,7 +1098,6 @@ Section Q_prv.
     - intros H.
       change (Gamma ⊢ exist_times 1 ( (num y)`[↑] == σ ((num x)`[↑] ⊕ $0))).
       specialize H as [k <-]%lt_nat_equiv.
-
       pose (sigma := [num x ; num k] ∗ var).
       eapply subst_exist_prv with (sigma := sigma).
       cbn. rewrite !num_subst.
@@ -1252,16 +1250,15 @@ Section Q_prv.
       + apply II. eapply IE with (phi := num 0 == num (S x)).
         eapply Weak with Gamma. now apply Zero_succ.
         firstorder.
-        apply symmetry.
-        firstorder.
-        apply Ctx; firstorder.
+        apply symmetry; [now right; apply G|].
+        apply Ctx. now left.
       + apply II. eapply IE with (phi := num x == num y).
         { eapply Weak with Gamma. apply IHx. 
           - lia. 
-          - firstorder. }
+          - now right. }
         apply Succ_inj. 
-        ++ firstorder.
-        ++ apply Ctx. firstorder.
+        ++ now right; apply G.
+        ++ apply Ctx. now left.
   Qed. 
 
 
@@ -1293,11 +1290,15 @@ Section Q_prv.
       eapply Weak with Gamma. apply symmetry in Hn. apply Hn.
       assumption. shelve.
       apply Ctx. Unshelve.
-      all: firstorder.
+      + now left.
+      + now right.
+      + right. now apply G.
+      + right. now apply G.
+      + now right.
   Qed.
 
 
-  Lemma num_lt x y : 
+  Lemma num_lt x y :
     x < y -> Gamma ⊢ num x ⧀ num y.
   Proof.
     intros [k Hk]%lt_nat_equiv.
@@ -1307,19 +1308,19 @@ Section Q_prv.
     apply symmetry, num_add_homomorphism; easy.
   Qed.
 
-  Lemma not_lt_zero_prv x : 
+  Lemma not_lt_zero_prv x :
     Q ⊢ ¬ num x ⧀ num 0.
   Proof.
     apply II. eapply ExE.
-    - apply Ctx. firstorder.
-    - cbn. rewrite num_subst. eapply IE.
+    - apply Ctx. now left.
+    - cbn -[Q]. rewrite num_subst. eapply IE.
       + pose (t := num x ⊕ $0).
         apply Zero_succ with (x := t).
-        firstorder.
-      + apply Ctx. firstorder.
+        right; now right.
+      + apply Ctx. now left.
   Qed.  
 
-  Lemma Faster3 : 
+  Lemma Faster3 :
     forall A, Q <<= A ++ map (subst_form ↑) Q.
   Proof.
     intros A; induction A; cbn -[Q].
@@ -1327,29 +1328,29 @@ Section Q_prv.
     - right. now apply IHA.
   Qed.
 
-  Lemma num_nlt x : 
+  Lemma num_nlt x :
     forall y, ~ (x < y) -> Q ⊢ ¬ num x ⧀ num y.
   Proof.
     induction x as [| x IHx].
     - intros [] ineq.
-      + apply not_lt_zero_prv. 
+      + apply not_lt_zero_prv.
       + lia.
     - intros [|y] ineq.
       + apply not_lt_zero_prv.
       + assert (~ x < y) as H % IHx by lia.
         apply II. eapply IE.
-        { eapply Weak; [apply H | firstorder]. }
+        { eapply Weak; [apply H | now right]. }
         eapply ExE.
-        * apply Ctx. firstorder.
+        * apply Ctx. now left.
         * apply ExI with (t := $0).
           cbn -[Q]. rewrite !num_subst.
-          eapply transitivity. firstorder.
-          2 : {apply Add_rec. firstorder. }
-          apply Succ_inj. firstorder.
+          eapply transitivity. right; now right.
+          2 : {apply Add_rec. right; now right. }
+          apply Succ_inj. right; now right.
           apply Ctx. now left.
   Qed. 
 
-  Lemma num_lt_dec x y : 
+  Lemma num_lt_dec x y :
     { Gamma ⊢ num x ⧀ num y } + { Gamma ⊢ ¬ num x ⧀ num y }.
   Proof.
     destruct (lt_dec x y); [left|right].
@@ -1357,14 +1358,51 @@ Section Q_prv.
     - apply Weak with Q; [now apply num_nlt | assumption].
   Qed.
 
-  Lemma term_lt_dec s t : 
-    bounded_t 0 s -> bounded_t 0 t -> { Gamma ⊢ s ⧀ t } + { Gamma ⊢ ¬ s ⧀ t }.
+
+  Lemma term_lt_dec s t :
+    map (subst_form ↑) Gamma = Gamma -> bounded_t 0 s -> bounded_t 0 t -> { Gamma ⊢ s ⧀ t } + { Gamma ⊢ ¬ s ⧀ t }.
   Proof.
-    intros Hs Ht.
+    intros HG Hs Ht.
     destruct (closed_term_is_num s Hs) as [n Hn], (closed_term_is_num t Ht) as [m Hm].
     destruct (num_lt_dec n m) as [H|H].
-    - left. 
-  Abort.
+    - left. eapply ExE. apply H.
+      apply ExI with (t0:=$0).
+      rewrite !num_subst, HG. cbn.
+      repeat rewrite (subst_closed_term t), (subst_closed_term s); auto. 
+      eapply transitivity.
+      2 : { eapply Weak. apply Hm. now right. }
+      now right; apply G.
+      apply symmetry. now right; apply G.
+      pose (j := σ (num n ⊕ $0)).
+      eapply transitivity with (y:= j); unfold j. now right; apply G.
+      apply eq_succ. now right; apply G.
+      apply eq_add. now right; apply G.
+      eapply Weak. apply Hn. now right.
+      apply reflexivity. now right; apply G.
+      apply symmetry. now right; apply G.
+      apply Ctx; now left.
+    - right. apply II. eapply IE.
+      eapply Weak. apply H. now right.
+      eapply ExE. apply Ctx; now left.
+      apply ExI with (t0:=$0).
+      cbn. rewrite !num_subst.
+      repeat rewrite (subst_closed_term t), (subst_closed_term s), HG; auto.
+      apply symmetry in Hm; auto.
+      apply symmetry in Hn; auto.
+      eapply transitivity.
+      2 : { eapply Weak. apply Hm. right; now right. }
+      now right; right; apply G.
+      apply symmetry. now right; right; apply G.
+      pose (j := σ (s ⊕ $0)).
+      eapply transitivity with (y:= j); unfold j. 
+      now right; right; apply G.
+      apply eq_succ. now right; right; apply G.
+      apply eq_add. now right; right; apply G.
+      eapply Weak. apply Hn. now right; right.
+      apply reflexivity. now right; right; apply G.
+      apply symmetry. now right; right; apply G.
+      apply Ctx; now left.
+  Qed.
 
 
 End Q_prv.

@@ -1,4 +1,4 @@
-Require Import FOL Peano Tarski Deduction CantorPairing LogicFacts NumberTheory.
+Require Import FOL Peano Tarski Deduction CantorPairing DecidabilityFacts NumberTheory.
 Require Import Lia.
 
 Import Vector.VectorNotations.

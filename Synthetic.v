@@ -79,6 +79,16 @@ Proof.
     now intros ?%decf.
 Qed.
 
+Fact Dec_decider_nat p :
+  Dec p -> exists f : nat -> nat, forall x : nat, p x <-> f x = 0.
+Proof.
+  intros [f decf]%Dec_decider.
+  exists (fun n => if f n then 0 else 1).
+  intros x. specialize (decf x).
+  destruct (f x) eqn:Hx; try tauto.
+  rewrite decf. split; congruence.
+Qed.
+
 
 Fact Dec_sigT_decider {X} p :
   Dec_sigT p <=> sigT (@decider X p).
@@ -93,10 +103,26 @@ Proof.
     now intros ?%decf.
 Qed.
 
+
 Fact dec_Dec_sig_T P :
   dec P <=> Dec_sigT (fun _ : True => P).
 Proof.
-Admitted.
+  split.
+  - intros []; now constructor.
+  - intros []; unfold dec; tauto.
+Qed.
+
+
+Lemma DN_Dec_equiv X (p : X -> Prop) :
+  ~ ~ Dec p <-> ((Dec_sigT p -> False) -> False).
+Proof.
+  split.
+  - intros nnH. apply (DN_remove nnH). 
+    intros [H]. intros nH. apply nH. 
+    intros x. apply H.
+  - intros nnH nH. apply nnH. intros H.
+    apply nH. constructor. apply H.
+Qed.
 
 
 Definition Witnessing_nat : Witnessing nat.
@@ -124,6 +150,18 @@ Proof.
   - intros [x y]; cbn. destruct (H x y); tauto.
 Qed.
 
+
+Fact enumerable_nat p :
+  enumerable p -> exists f, forall x : nat, p x <-> exists n : nat, f n = S x.
+Proof. 
+  intros [f Hf].
+  exists (fun n => match f n with Some x => S x | _ => 0 end).
+  intros x. rewrite Hf. split; intros [n Hn]; exists n. 
+  - now rewrite Hn.
+  - destruct (f n); congruence.
+Qed.
+
+
 Fact enumerable_equiv X :
   Enumerable X <-> enumerable (fun x : X => True).
 Proof.
@@ -146,6 +184,17 @@ Proof.
     refine (markov (fun n => f n = 0) _).
     constructor; intros ?.
     decide equality.
+Qed.
+
+
+Fact MP_Dec_stable :
+  MP -> forall (p : nat -> Prop), Dec p -> stable (ex p).
+Proof.
+  intros mp p [f Hf]%Dec_decider nnH.
+  destruct (mp (fun n => if f n then 0 else 1)) as [y Hy].
+  - apply (DN_chaining nnH), DN. intros [y Hy].
+    exists y. apply Hf in Hy. now destruct (f y).
+  - exists y. apply Hf. now destruct (f y).
 Qed.
 
 

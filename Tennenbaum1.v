@@ -1,4 +1,4 @@
-Require Import FOL Peano Tarski Deduction CantorPairing LogicFacts NumberTheory.
+Require Import FOL Peano Tarski Deduction CantorPairing DecidabilityFacts NumberTheory.
 Require Import Lia.
 Import Vector.VectorNotations.
 
@@ -1141,7 +1141,8 @@ Section Thm4.
   Qed.
 
 
-  Lemma LEM_binary ϕ : binary ϕ -> Δ0 ϕ -> ⊨ ∀∀ ϕ ∨ ¬ ϕ.
+  Lemma LEM_binary ϕ : 
+    binary ϕ -> Δ0 ϕ -> ⊨ ∀∀ ϕ ∨ ¬ ϕ.
   Proof.
     intros binary_ϕ Δ0_ϕ rho d e.
     induction ϕ using form_ind_falsity_on.
@@ -1158,8 +1159,8 @@ Section Thm4.
   Qed.
 
 
-  Lemma LEM_bounded_exist_sat ϕ : Δ0 ϕ -> binary ϕ ->
-    ⊨ ∀∀ (∃ $0 ⧀ $2 ∧ ϕ) ∨ ¬ (∃ $0 ⧀ $2 ∧ ϕ).
+  Lemma LEM_bounded_exist_sat ϕ : 
+    Δ0 ϕ -> binary ϕ -> ⊨ ∀∀ (∃ $0 ⧀ $2 ∧ ϕ) ∨ ¬ (∃ $0 ⧀ $2 ∧ ϕ).
   Proof.
     intros Δ0_ϕ binary_ϕ ρ N.
     pose (Φ := ∀ (∃ $0 ⧀ $2 ∧ ϕ) ∨ ¬ (∃ $0 ⧀ $2 ∧ ϕ)).
@@ -1214,8 +1215,8 @@ Section Thm4.
   Qed.
 
 
-  Lemma LEM_bounded_exist_sat' ϕ : Δ0 ϕ -> bounded 2 ϕ ->
-    ⊨ ∀∀ (∃ $0 ⧀ $2 ∧ ϕ) ∨ (∀ $0 ⧀ $2 --> ¬ ϕ).
+  Lemma LEM_bounded_exist_sat' ϕ : 
+    Δ0 ϕ -> bounded 2 ϕ -> ⊨ ∀∀ (∃ $0 ⧀ $2 ∧ ϕ) ∨ (∀ $0 ⧀ $2 --> ¬ ϕ).
   Proof.
     intros Δ0_ϕ binary_ϕ ρ N.
     pose (Φ := ∀ (∃ $0 ⧀ $2 ∧ ϕ) ∨ (∀ $0 ⧀ $2 --> ¬ ϕ)).
@@ -1510,13 +1511,11 @@ Section Hypoth.
           rewrite switch_up_num in Hd2.
           eapply He.
           1,2,3: shelve.
-          rewrite !sat_comp. split.
-          eapply bound_ext. apply Ha1.
-          2 : apply Hd1. 
-          intros [|[]]; solve_bounds; cbn.
-          eapply bound_ext. apply Hb1.
-          2 : apply Hd2.
-          intros [|[]]; solve_bounds; cbn.
+          rewrite !sat_comp. split; eapply bound_ext.
+          1, 4 : eauto.
+          2 : apply Hd1.
+          3 : apply Hd2.
+          all: intros [|[]]; solve_bounds.
           Unshelve. exact (fun _ => e).
           all : cbn.
           apply Hd2. apply Hd1. now apply num_lt_nonStd.

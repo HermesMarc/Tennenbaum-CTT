@@ -13,4 +13,11 @@ Deduction.v
 Tarski.v
 
 Peano.v
-Tennenbaum.v
+Formulas.v
+Coding.v
+Church.v
+Tennenbaum_diagonal.v
+Tennenbaum_insep.v
+Makholm.v
+McCarty.v
+Variants.v
