@@ -426,8 +426,8 @@ Section Closed.
       now apply (TEMP_NAME_3 _ _ 2).
   Qed.
 
-  Lemma Q_lt_equiv n : 
-    Q ⊢I ∀ $0 ⧀ num (S n) <--> $0 ⧀ num n ∨ $0 == num n.
+  Lemma Q_lt_cases n : 
+    Q ⊢I ∀ $0 ⧀ num (S n) --> $0 ⧀ num n ∨ $0 == num n.
   Proof.
   Admitted.
 
@@ -460,8 +460,7 @@ Section Closed.
       cbn -[Q]; apply CI.
       + admit.
       + apply Hx.
-    - right. apply TEMP_NAME in h. 
-      
+    - right. apply TEMP_NAME in h.
   Admitted.
 
 
@@ -472,16 +471,18 @@ Section Closed.
     intros H. do 2 invert_bounds; assumption.
   Qed.
 
-  Lemma Q_dec_bounded_exists α n : 
+
+  Lemma Q_dec_bounded_exists α n :
     (forall x, Q_dec α[(num x)..]) -> bounded 0 (∃ $0 ⧀ num n ∧ α) -> Q_dec (∃ $0 ⧀ num n ∧ α).
   Proof.
     intros Dec_α b1%How2.
     induction n as [| n [h|h]].
-    - right. apply II. eapply ExE.
+    - right. cbn -[Q]. apply II. eapply ExE.
       {apply Ctx; now left. }
       cbn -[Q]. eapply IE.
-      {eapply Weak with (A:=Q). (* apply not_lt_zero_prv. *) }
-      admit.
+      { eapply Weak with (A:=Q). apply (not_lt_zero_prv _ $0).
+        now do 2 right. }
+      cbn -[Q]. eapply CE1, Ctx. now left.
     - left. admit.
     - destruct (Dec_α n).
       { left. eapply ExI with (t:=num n); cbn -[Q].
@@ -496,7 +497,6 @@ Section Closed.
       { right. apply II.
         eapply ExE; cbn - [Q].
         { apply Ctx. now left. }
-        (* $0 is now a number for which we have $0 ⧀ S n  *)
         pose (ϕ := $0 ⧀ num n ∨ $0 == num n).
         apply IE with (phi:= ϕ).
         { apply II. eapply DE.
@@ -507,10 +507,12 @@ Section Closed.
             eapply ExI with (t:= $0).
             cbn -[Q]; apply CI.
             { rewrite !num_subst in *. apply Ctx; now left. }
-            { (* since α is bounded by 1, α[$0..] = α 
-                 which we can prove, as α is part of the second statement in the context. *) admit. }
+            { enough (α[$0..] = α) as ->. 
+              eapply CE2, Ctx.
+              now right; right; left.
+              admit. }
         }
-        { (* this must follow from an external lemma *) admit. }
+        unfold ϕ. 
       }
   Admitted.
     

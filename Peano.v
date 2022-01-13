@@ -1308,17 +1308,24 @@ Section Q_prv.
     apply symmetry, num_add_homomorphism; easy.
   Qed.
 
-  Lemma not_lt_zero_prv x :
-    Q ⊢ ¬ num x ⧀ num 0.
+  Lemma not_lt_zero_prv' :
+  Q ⊢ ∀ ¬ $0 ⧀ num 0.
   Proof.
-    apply II. eapply ExE.
+    apply AllI, II. eapply ExE.
     - apply Ctx. now left.
-    - cbn -[Q]. rewrite num_subst. eapply IE.
-      + pose (t := num x ⊕ $0).
-        apply Zero_succ with (x := t).
+    - cbn -[Q]. eapply IE.
+      + pose (s := $1 ⊕ $0).
+        apply Zero_succ with (x := s).
         right; now right.
       + apply Ctx. now left.
-  Qed.  
+  Qed.
+
+  Lemma not_lt_zero_prv t :
+    Q ⊢ ¬ t ⧀ num 0.
+  Proof.
+    change (Q ⊢ (¬ $0 ⧀ num 0)[t..]).
+    apply AllE, not_lt_zero_prv'.
+  Qed.
 
   Lemma Faster3 :
     forall A, Q <<= A ++ map (subst_form ↑) Q.
