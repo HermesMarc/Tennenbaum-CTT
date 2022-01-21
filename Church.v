@@ -22,9 +22,9 @@ Instance ff : falsity_flag := falsity_on.
 
 Definition represents ϕ f := forall x, Q ⊢I ∀ ϕ[up (num x)..] <--> $0 == num (f x).
 Definition CT_Q :=
-  forall f : nat -> nat, exists ϕ, bounded 2 ϕ /\ inhabited(sigma1 ϕ) /\ represents ϕ f.
+  forall f : nat -> nat, exists ϕ, bounded 3 ϕ /\ inhabited(delta0 ϕ) /\ represents (∃ ϕ) f.
 Definition WCT_Q :=
-  forall f : nat -> nat, ~ ~ exists ϕ, bounded 2 ϕ /\ inhabited(sigma1 ϕ) /\ represents ϕ f.
+  forall f : nat -> nat, ~ ~ exists ϕ, bounded 3 ϕ /\ inhabited(delta0 ϕ) /\ represents (∃ ϕ) f.
 
 
 Definition strong_repr ϕ (p : nat -> Prop) := (forall x, p x -> Q ⊢I ϕ[(num x)..]) /\ (forall x, ~ p x -> Q ⊢I ¬ϕ[(num x)..]).
@@ -33,8 +33,8 @@ Definition WRT_strong := forall p : nat -> Prop, Dec p ->  ~ ~ exists ϕ, bounde
 
 
 Definition weak_repr ϕ (p : nat -> Prop) := (forall x, p x <-> Q ⊢I ϕ[(num x)..]).
-Definition RT_weak := forall p : nat -> Prop, enumerable p -> exists ϕ, bounded 1 ϕ /\ inhabited(sigma1 ϕ) /\ weak_repr ϕ p.
-Definition WRT_weak := forall p : nat -> Prop, enumerable p -> ~ ~ exists ϕ, bounded 1 ϕ /\ inhabited(sigma1 ϕ) /\ weak_repr ϕ p.
+Definition RT_weak := forall p : nat -> Prop, enumerable p -> exists ϕ, bounded 3 ϕ /\ inhabited(delta0 ϕ) /\ weak_repr (∃∃ ϕ) p.
+Definition WRT_weak := forall p : nat -> Prop, enumerable p -> ~ ~ exists ϕ, bounded 3 ϕ /\ inhabited(delta0 ϕ) /\ weak_repr (∃∃ ϕ) p.
 
 
 
@@ -65,11 +65,12 @@ Proof.
   intros ct p Dec_p.
   destruct (Dec_decider_nat _ Dec_p) as [f Hf]. 
   destruct (ct f) as [ϕ [b2 [[s1] H]]].
-  pose (Φ := ϕ[(num 0)..]).
+  pose (Φ := (∃ ϕ)[(num 0)..]).
   exists Φ. repeat split; unfold Φ.
-  { eapply subst_bound; eauto.
-    intros [|[]]; solve_bounds. }
-  { now apply subst_sigma1. }
+  { eapply subst_bound with (N:=2).
+    - now solve_bounds.  
+    - intros [|[]]; solve_bounds. }
+  { apply subst_sigma1. apply Sigma_exists. now constructor. }
   all: intros x; specialize (H x); rewrite up_switch.
   all: eapply AllE with (t := num 0) in H; cbn -[Q] in H.
   all: apply prv_split in H; destruct H as [H1 H2].
@@ -91,11 +92,12 @@ Proof.
   intros wct p Dec_p.
   destruct (Dec_decider_nat _ Dec_p) as [f Hf]. 
   apply (DN_chaining (wct f)), DN. intros [ϕ [b2 [[s1] H]]].
-  pose (Φ := ϕ[(num 0)..]).
+  pose (Φ := (∃ ϕ)[(num 0)..]).
   exists Φ. repeat split; unfold Φ.
-  { eapply subst_bound; eauto. 
-    intros [|[]]; solve_bounds. }
-  { now apply subst_sigma1. }
+  { eapply subst_bound with (N:=2).
+    - now solve_bounds.  
+    - intros [|[]]; solve_bounds. }
+  { apply subst_sigma1. apply Sigma_exists. now constructor. }
   all: intros x; specialize (H x); rewrite up_switch.
   all: eapply AllE with (t := num 0) in H; cbn -[Q] in H.
   all: apply prv_split in H; destruct H as [H1 H2].
@@ -116,14 +118,14 @@ Lemma CT_RTw :
 Proof.
   intros ct p [f Hf]%enumerable_nat.
   destruct (ct f) as [ϕ [b2 [[s1] H]]].
-  pose (Φ := ∃ ϕ[(σ $1)..] ).
+  pose (Φ := ϕ[(σ $1)..] ).
   exists Φ; split. 2: split.
-  - solve_bounds. eapply subst_bound; eauto.
-    intros [|[]]; repeat solve_bounds.
-  - constructor. now apply Sigma_exists, subst_sigma1. 
+  - unfold Φ. eapply subst_bound; eauto.
+    intros [|[|[]]]; repeat solve_bounds.
+  - unfold Φ. constructor. now apply subst_delta0.
   - intros x. rewrite Hf. split.
     + intros [n Hn]. symmetry in Hn.
-      fold Φ.
+(*       fold Φ.
       eapply (@sigma1_complete Φ _ 1) with (rho := fun _ => 0).
       { solve_bounds. eapply subst_bound; eauto.
         intros [|[]]; repeat solve_bounds. }
@@ -155,13 +157,14 @@ Proof.
       apply b2. 2: apply Hn.
       intros [|[]]; cbn; rewrite ?num_subst, ?eval_num, ?inu_nat_id in *.
       all: try lia; reflexivity.
-    Unshelve. now apply Sigma_exists, subst_sigma1.
-Qed.
+    Unshelve. now apply Sigma_exists, subst_sigma1. *)
+Admitted.
 
 
 Lemma WCT_WRTw :
   WCT_Q -> WRT_weak.
 Proof.
+(*
   intros wct p [f Hf]%enumerable_nat.
   apply (DN_chaining (wct f)), DN. intros [ϕ [b2 [[s1] H]]].
   pose (Φ := ∃ ϕ[(σ $1)..] ).
@@ -203,8 +206,8 @@ Proof.
       apply b2. 2: apply Hn.
       intros [|[]]; cbn; rewrite ?num_subst, ?eval_num, ?inu_nat_id in *.
       all: try lia; reflexivity.
-    Unshelve. now apply Sigma_exists, subst_sigma1. 
-Qed.
+    Unshelve. now apply Sigma_exists, subst_sigma1.  *)
+Admitted.
 
 
 End ChurchThesis.

@@ -562,11 +562,52 @@ Section Sigma1.
     intros [m Hm]%Σ1_complete'.
     cbn -[Q].
     change (∃ α[up (num n)..]) with (Peano.exist_times 1 (α[up (num n)..])).
-    eapply subst_exist_prv with (sigma := (num m)..); auto.
-    + eapply subst_bound; eauto.
-      intros [|[]]; solve_bounds. cbn.
-      rewrite num_subst.
+    eapply subst_exist_prv; eauto.
+    eapply subst_bound; eauto.
+    intros [|[]]; solve_bounds. cbn.
+    rewrite num_subst.
+    apply closed_num.
+  Qed.
+
+End Sigma1.
+
+
+Section Sigma1.
+
+  Variable α : form.
+  Variable ternary_α : bounded 3 α.
+  Variable delta0_α : delta0 α.
+
+  Lemma Σ1_ternary_complete' n :
+    N⊨ (∃∃α)[(num n)..] -> exists a b, Q ⊢I α[up (up (num n)..)][(num b)..][(num a)..].
+  Proof.
+    intros [a [b Hab]]%(fun h => h (fun _ => 0)).
+    rewrite <-!switch_nat_num in Hab. exists a, b.
+    eapply Q_delta0_complete; eauto.
+    - eapply subst_bound with (N:=1); eauto.
+      eapply subst_bound with (N:=2); eauto.
+      eapply subst_bound with (N:=3); eauto.
+      intros [|[|[]]]; solve_bounds; cbn.
+      rewrite !num_subst. apply closed_num.
+      intros [|[]]; solve_bounds; cbn.
       apply closed_num.
+      intros [|]; solve_bounds; cbn.
+      apply closed_num.
+    - now repeat apply subst_delta0.
+  Qed.
+
+  Lemma Σ1_ternary_complete n :
+    N⊨ (∃∃α)[(num n)..] -> Q ⊢I (∃∃α)[(num n)..].
+  Proof.
+    intros (a & b & Hab)%Σ1_ternary_complete'.
+    cbn -[Q].
+    change (∃∃ α[up (up (num n)..)]) with (Peano.exist_times 2 (α[up (up (num n)..)])).
+    rewrite subst_comp in Hab.
+    eapply subst_exist_prv; eauto. 
+    eapply subst_bound; eauto.
+    intros [|[|[]]]; solve_bounds. cbn.
+    rewrite !num_subst.
+    apply closed_num.
   Qed.
 
 End Sigma1.

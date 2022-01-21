@@ -32,25 +32,34 @@ Section Model.
 
   Definition Insep :=
     exists α β, 
-      binary α /\ inhabited(delta0 α) /\ binary β /\ inhabited(delta0 β) /\ 
-      (forall n, ~ Q ⊢I ((∃α) ∧ (∃β))[(num n)..] ) /\ 
-      (forall G, Dec G -> (forall n, Q ⊢I (∃α)[(num n)..] -> G n) -> 
-        (forall n, ~ (Q ⊢I (∃β)[(num n)..] /\ G n)) -> False).
+      bounded 3 α /\ inhabited(delta0 α) /\ bounded 3 β /\ inhabited(delta0 β) /\ 
+      (forall n, ~ Q ⊢I ((∃∃α) ∧ (∃∃β))[(num n)..] ) /\ 
+      (forall G, Dec G -> (forall n, Q ⊢I (∃∃α)[(num n)..] -> G n) -> 
+        (forall n, ~ (Q ⊢I (∃∃β)[(num n)..] /\ G n)) -> False).
 
+(* 
+  Compute ($0 == $1 ∨ $1 == $2)[$3..][$1..].
+  Compute ($0 == $1 ∨ $1 == $2)[$5..][$3..].
+ *)
+
+  Lemma LEM_bounded_exist_ternary {phi} sigma : 
+    delta0 phi -> bounded 3 phi -> forall b x, (x .: b .: sigma) ⊨ (∃∃ $0 ⧀ $3 ∧ $1 ⧀ $3 ∧ phi) \/ ~ (x .: b .: sigma) ⊨ (∃∃ $0 ⧀ $3 ∧ $1 ⧀ $3 ∧ phi).
+  Proof.
+  Admitted.
 
   Lemma nonDecDiv :
     Insep -> Stable std -> nonStd D -> ~ ~ exists d : D, ~ Dec (fun n => div_pi n d).
   Proof.
     intros (α & β & Ha1 & [Ha0] & Hb1 & [Hb0] & Disj & Insepa) Stab [d Hd].
-    pose (phi := (∀ $0 ⧀ $1 --> ∀ $0 ⧀ $2 --> ∀ $0 ⧀ $3 --> ¬ (α[$1..] ∧ β[$2..]) ) ).
+    pose (phi := (∀ $0 ⧀ $1 --> ∀ $0 ⧀ $2 --> ∀ $0 ⧀ $3 --> ∀ $0 ⧀ $4 --> ∀ $0 ⧀ $5 --> ¬ (α[$3..][$1..] ∧ β[$5..][$3..]) ) ).
     enough (forall n rho, ((inu n).:rho) ⊨ phi ) as H.
     eapply Overspill_DN in H; eauto.
-    - refine (DN_chaining (Coding_nonstd_binary_Definite _ _ _ _ _ _ _ (∃ $0 ⧀ $2 ∧ α) _ _) _); eauto.
+    - refine (DN_chaining (Coding_nonstd_binary_Definite _ _ _ _ _ _ _ (∃∃ $0 ⧀ $3 ∧ $1 ⧀ $3 ∧ α) _ _) _); eauto.
       {apply nonStd_notStd. now exists d. }
       { repeat solve_bounds.
         eapply bounded_up; eauto; lia. }
       { intros b u.
-        specialize (LEM_bounded_exist _ _ axioms ψ Hψ (fun _ => i0) Ha0 Ha1 b (inu u)) as [h|h].
+        specialize (LEM_bounded_exist_ternary (fun _ => i0) Ha0 Ha1 b (inu u)) as [h|h].
         - left. intros ?. eapply bound_ext with (N := 2).
           3 : apply h.
           repeat solve_bounds. eapply bounded_up; eauto.
@@ -69,48 +78,48 @@ Section Model.
       + intros n A_n. unfold Div_nat.
         specialize (Hc n (fun _ => e)) as [Hc _].
         cbn in Hc. destruct Hc as [ d' [H1 H2] ].
-        * assert (N⊨ (∃α)[(num n)..]) as A_n'.
+        * assert (N⊨ (∃∃α)[(num n)..]) as A_n'.
           { intros rho. eapply soundness.
             - apply A_n.
             - apply Q_std_axioms.
           }
-          apply Σ1_complete' in A_n'; auto.
-          destruct A_n' as [m Hm].
-          exists (inu m). split; [apply num_lt_nonStd; auto|].
-          rewrite <-!switch_num.
-          apply soundness in Hm.
-          rewrite !switch_num, <-switch_up_num, <-switch_num.
-          apply Hm.
+          apply Σ1_ternary_complete' in A_n'; auto.
+          destruct A_n' as (a & b & Hab).
+          exists (inu a), (inu b). repeat split; [apply num_lt_nonStd; auto|apply num_lt_nonStd; auto| ].
+          apply soundness in Hab.
+          specialize (Hab D I (fun _ => i0)). rewrite !sat_comp in Hab.
+          eapply bound_ext. apply Ha1. 2: apply Hab.
+          intros [|[|[]]] ?; cbn; try now rewrite ?num_subst, ?eval_num; try lia.
           intros ??. apply axioms. now constructor.
         * exists d'. split.
           eapply bound_ext. apply Hψ. 2: apply H1.
           intros [|[]]; try reflexivity; try lia.
           cbn. apply H2.
       + intros n [B_n C_n].
-        assert (N⊨ (∃β)[(num n)..]) as B_n'.
+        assert (N⊨ (∃∃β)[(num n)..]) as B_n'.
         { intros rho. eapply soundness. 
           - apply B_n.
           - apply Q_std_axioms.
         }
-        apply Σ1_complete' in B_n'; auto.
-        destruct B_n' as [m Hm].
-        apply soundness in Hm.
-        assert ( (e .: (fun _ => e)) ⊨ (∃ $0 ⧀ $1 ∧ β[up (num n)..] )) as Heβ.
-        cbn. exists (inu m). split.
-        now apply num_lt_nonStd. 
-        rewrite <-switch_num. apply Hm.
-        intros ??; apply axioms; now constructor.
-        cbn in Hc. 
+        apply Σ1_ternary_complete' in B_n'; auto.
+        destruct B_n' as (a & b & Hab).
+        apply soundness in Hab.
+        assert ( (e .: (fun _ => e)) ⊨ (∃∃ $0 ⧀ $2 ∧ $1 ⧀ $2 ∧ β[up (up (num n)..)] )) as Heβ.
+        cbn. exists (inu a), (inu b). repeat split; [apply num_lt_nonStd; auto|apply num_lt_nonStd; auto| ].
+        specialize (Hab D I (fun _ => i0)). rewrite !sat_comp in Hab.
+        rewrite sat_comp.
+        eapply bound_ext. apply Hb1. 2: apply Hab.
+        intros [|[|[]]] ?; cbn; try now rewrite ?num_subst, ?eval_num; try lia.
+        intros ??. apply axioms. now constructor.
         specialize (Hc n (fun _ => e)) as [_ Hc].
-        destruct Hc as [d1 Hd1].
+        destruct Hc as (d1 & d2 & Hd12); fold sat in *.
         * destruct C_n as [d' Hd']. exists d'. split.
           eapply bound_ext. apply Hψ. 2 : apply Hd'.
           intros [|[]]; solve_bounds.
           apply Hd'.
-        * cbn in Heβ. destruct Heβ as [d2 Hd2].
-          rewrite switch_up_num in Hd2.
+        * cbn in Heβ. destruct Heβ as [d3 Hd3].
           eapply He.
-          apply Hd2.
+          apply Hd12.
           apply Hd1.
           cbn. apply num_lt_nonStd; eauto.
           fold sat.
@@ -145,12 +154,15 @@ Section Model.
         repeat eapply subst_bound; eauto. 
         eapply delta0_absolutness' with (rho0 := sigma) in Ha.
         apply Ha.
-        admit.
-        repeat apply subst_delta0; auto.
-        apply axioms.
-        apply PA_std_axioms.
-        apply Ha1.
-        intros [|[]]; solve_bounds.
+        * eapply subst_bound with (N:=1).
+          eapply subst_bound with (N:=2); eauto.
+          intros [|[]] ?; cbn; try rewrite num_subst; [solve_bounds | apply closed_num | lia].
+          intros [|] ?; cbn; [apply closed_num |lia].
+        * repeat apply subst_delta0; auto.
+        * apply axioms.
+        * apply PA_std_axioms.
+        * apply Ha1.
+        * intros [|[]]; solve_bounds.
       + apply Σ1_complete; auto.
         intros sigma. rewrite sat_comp in Ha.
         rewrite sat_comp in Hb.
@@ -159,17 +171,18 @@ Section Model.
         exists k2. rewrite <-switch_nat_num.
         eapply delta0_absolutness' with (rho0 := sigma) in Hb.
         apply Hb.
-        admit.
-        repeat apply subst_delta0; auto.
-        apply axioms.
-        apply PA_std_axioms.
-        apply Hb1.
-        intros [|[]]; solve_bounds.
+        * eapply subst_bound with (N:=1).
+          eapply subst_bound with (N:=2); eauto.
+          intros [|[]] ?; cbn; try rewrite num_subst; [solve_bounds | apply closed_num | lia].
+          intros [|] ?; cbn; [apply closed_num |lia].
+        * repeat apply subst_delta0; auto.
+        * apply axioms.
+        * apply PA_std_axioms.
+        * apply Hb1.
+        * intros [|[]]; solve_bounds.
       + apply axioms.
       + apply axioms.
       + apply axioms.
-  Admitted.
-
-
+  Qed.
 
 End Model.
