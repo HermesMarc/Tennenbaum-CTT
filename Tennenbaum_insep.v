@@ -104,36 +104,46 @@ Section Model.
         apply Σ1_ternary_complete' in B_n'; auto.
         destruct B_n' as (a & b & Hab).
         apply soundness in Hab.
-        assert ( (e .: (fun _ => e)) ⊨ (∃∃ $0 ⧀ $2 ∧ $1 ⧀ $2 ∧ β[up (up (num n)..)] )) as Heβ.
-        cbn. exists (inu a), (inu b). repeat split; [apply num_lt_nonStd; auto|apply num_lt_nonStd; auto| ].
-        specialize (Hab D I (fun _ => i0)). rewrite !sat_comp in Hab.
-        rewrite sat_comp.
-        eapply bound_ext. apply Hb1. 2: apply Hab.
-        intros [|[|[]]] ?; cbn; try now rewrite ?num_subst, ?eval_num; try lia.
-        intros ??. apply axioms. now constructor.
+        assert ((fun _ => e) ⊨ (∃∃ $0 ⧀ $2 ∧ $1 ⧀ $2 ∧ β[up (up (num n)..)] )) as Heβ.
+        { cbn. exists (inu a), (inu b). repeat split; [apply num_lt_nonStd; auto|apply num_lt_nonStd; auto| ].
+          specialize (Hab D I (fun _ => i0)). rewrite !sat_comp in Hab.
+          rewrite sat_comp.
+          eapply bound_ext. apply Hb1. 2: apply Hab.
+          intros [|[|[]]] ?; cbn; try now rewrite ?num_subst, ?eval_num; try lia.
+          intros ??. apply axioms. now constructor. }
         specialize (Hc n (fun _ => e)) as [_ Hc].
-        destruct Hc as (d1 & d2 & Hd12); fold sat in *.
+        destruct Hc as (k1 & k2 & [Hk2 Hk1] & Hk12); fold sat in *.
         * destruct C_n as [d' Hd']. exists d'. split.
           eapply bound_ext. apply Hψ. 2 : apply Hd'.
           intros [|[]]; solve_bounds.
           apply Hd'.
-        * cbn in Heβ. destruct Heβ as [d3 Hd3].
-          eapply He.
-          apply Hd12.
-          apply Hd1.
-          cbn. apply num_lt_nonStd; eauto.
-          fold sat.
-          rewrite !sat_comp. split; eapply bound_ext.
-          1, 4 : eauto.
-          2 : apply Hd1.
-          3 : apply Hd2.
-          all: intros [|[]]; solve_bounds.
+        * cbn in Heβ, Hk12, Hk1, Hk2. destruct Heβ as (k3 & k4 & [Hk4 Hk3] & Hk34).
+          rewrite sat_comp in Hk34.
+          eapply He; fold sat; cbn.
+          apply Hk4.
+          apply Hk3.
+          apply Hk2.
+          apply Hk1.
+          apply num_lt_nonStd with (n:=n); auto.
+          rewrite !sat_comp.
+          split.
+          **  eapply bound_ext. 
+              apply Ha1. 2: apply Hk12.
+              intros [|[|[]]] ?; try reflexivity; try lia.
+          **  eapply bound_ext. 
+              apply Hb1. 2: apply Hk34.
+              intros [|[|[]]] ?; cbn; try reflexivity; try lia.
+              now rewrite !num_subst, eval_num. 
           Unshelve. exact (fun _ => i0).
     - repeat solve_bounds.
-      eapply subst_bound; eauto. 
-      intros [|[|[|[]]]]; solve_bounds.
-      eapply subst_bound; eauto.
-      intros [|[|[|[]]]]; solve_bounds.
+      eapply subst_bound with (N:=4).
+      eapply subst_bound with (N:=4). eapply bounded_up; eauto. 
+      intros [|[|[|[|[]]]]]; solve_bounds.
+      intros [|[|[|[|[]]]]]; solve_bounds.
+      eapply subst_bound with (N:=6).
+      eapply subst_bound with (N:=6). eapply bounded_up; eauto. 
+      intros [|[|[|[|[|[]]]]]]; solve_bounds.
+      intros [|[|[|[|[|[]]]]]]; solve_bounds.
     - apply nonStd_notStd. now exists d.  
     - intros n rho. cbn.
       intros d2 H2 d1 H1 d0 H0 [Ha Hb].
