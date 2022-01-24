@@ -21,13 +21,13 @@ Section Model.
 
   (* We also assume the existence of a formula which represents the prime number function *)
   Variable ψ : form.
-  Variable Hψ : binary ψ /\ (forall x, Q ⊢I ∀ ψ[up (num x)..] <--> $0 == num (Irred x) ).
+  Variable Hψ : bounded 3 ψ /\ (forall x, Q ⊢I ∀ (∃ ψ)[up (num x)..] <--> $0 == num (Irred x) ).
 
 
   Definition div e d := exists k : D, e i⊗ k = d.
   Definition div_num n (d : D) := exists e, inu n i⊗ e = d.
   Definition Div_nat (d : D) := fun n => div_num n d.
-  Definition div_pi n a :=  (inu n .: (fun _ => a)) ⊨ (∃ (ψ ∧ ∃ $1 ⊗ $0 == $3)).
+  Definition div_pi n a :=  (inu n .: (fun _ => a)) ⊨ (∃ ((∃ ψ) ∧ ∃ $1 ⊗ $0 == $3)).
 
 
   Definition Insep :=
@@ -36,11 +36,6 @@ Section Model.
       (forall n, ~ Q ⊢I ((∃∃α) ∧ (∃∃β))[(num n)..] ) /\ 
       (forall G, Dec G -> (forall n, Q ⊢I (∃∃α)[(num n)..] -> G n) -> 
         (forall n, ~ (Q ⊢I (∃∃β)[(num n)..] /\ G n)) -> False).
-
-(* 
-  Compute ($0 == $1 ∨ $1 == $2)[$3..][$1..].
-  Compute ($0 == $1 ∨ $1 == $2)[$5..][$3..].
- *)
 
   Lemma LEM_bounded_exist_ternary {phi} sigma : 
     delta0 phi -> bounded 3 phi -> forall b x, (x .: b .: sigma) ⊨ (∃∃ $0 ⧀ $3 ∧ $1 ⧀ $3 ∧ phi) \/ ~ (x .: b .: sigma) ⊨ (∃∃ $0 ⧀ $3 ∧ $1 ⧀ $3 ∧ phi).
@@ -146,53 +141,83 @@ Section Model.
       intros [|[|[|[|[|[]]]]]]; solve_bounds.
     - apply nonStd_notStd. now exists d.  
     - intros n rho. cbn.
-      intros d2 H2 d1 H1 d0 H0 [Ha Hb].
-      apply lessthen_num in H2.
-      apply lessthen_num in H1.
-      apply lessthen_num in H0.
+      intros d4 H4 d3 H3 d2 H2 d1 H1 d0 H0 [H31 H53].
+      apply lessthen_num in H4; auto.
+      apply lessthen_num in H3; auto.
+      apply lessthen_num in H2; auto.
+      apply lessthen_num in H1; auto.
+      apply lessthen_num in H0; auto.
+      destruct H4 as (k4 & H4 & ->).
+      destruct H3 as (k3 & H3 & ->).
       destruct H2 as (k2 & H2 & ->).
       destruct H1 as (k1 & H1 & ->).
       destruct H0 as (k0 & H0 & ->).
       apply (Disj k0).
-      change (Q ⊢I ((∃ α)[(num k0)..] ∧ (∃ β)[(num k0)..])).
+      change (Q ⊢I ((∃∃ α)[(num k0)..] ∧ (∃∃ β)[(num k0)..])).
       apply CI.
-      + apply Σ1_complete; auto.
-        intros sigma. rewrite sat_comp in Ha.
-        eapply bound_ext with (rho0 := (inu k1 .: inu k0 .: inu k2 .: inu n .: rho)) in Ha.
-        rewrite <-switch_up_num, <-switch_num in Ha.
-        exists k1. rewrite <-switch_nat_num.
-        repeat eapply subst_bound; eauto. 
-        eapply delta0_absolutness' with (rho0 := sigma) in Ha.
-        apply Ha.
+      + apply Σ1_ternary_complete; auto.
+        intros sigma. rewrite <-switch_num in H31.
+        exists k1, k2.
+        assert ((inu k1 .: inu k2 .: inu k3 .: inu k4 .: inu n .: rho) ⊨ α[up (up (num k0)..)][(num k2)..][(num k1)..]).
+        eapply bound_ext with (N:=0).
+        eapply subst_bound with (N:=1).
+        eapply subst_bound with (N:=2).
+        eapply subst_bound with (N:=3); auto.
+        intros [|[|[|[]]]]; cbn; solve_bounds.
+        rewrite ?num_subst. apply closed_num.
+        intros [|[|[]]]; cbn; solve_bounds.
+        apply closed_num.
+        intros [|[]]; cbn; solve_bounds.
+        apply closed_num.
+        lia.
+        rewrite !sat_comp. rewrite !sat_comp in H31.
+        eapply bound_ext. apply Ha1. 2 : apply H31.
+        intros [|[|[]]]; cbn; rewrite ?num_subst, ?eval_num; try reflexivity; try lia.
+        eapply delta0_absolutness' in H.
+        rewrite !switch_nat_num in H.
+        apply H.
         * eapply subst_bound with (N:=1).
-          eapply subst_bound with (N:=2); eauto.
-          intros [|[]] ?; cbn; try rewrite num_subst; [solve_bounds | apply closed_num | lia].
-          intros [|] ?; cbn; [apply closed_num |lia].
-        * repeat apply subst_delta0; auto.
+          eapply subst_bound with (N:=2).
+          eapply subst_bound; eauto.
+          intros[|[|[]]]; cbn; solve_bounds.
+          rewrite !num_subst. apply closed_num.
+          intros[|[]]; cbn; solve_bounds. apply closed_num.
+          intros[]; cbn; solve_bounds. apply closed_num.
+        * now repeat eapply subst_delta0.
         * apply axioms.
-        * apply PA_std_axioms.
-        * apply Ha1.
-        * intros [|[]]; solve_bounds.
-      + apply Σ1_complete; auto.
-        intros sigma. rewrite sat_comp in Ha.
-        rewrite sat_comp in Hb.
-        eapply bound_ext with (rho0 := (inu k2 .: inu k0 .: inu k1 .: inu n .: rho)) in Hb.
-        rewrite <-switch_up_num, <-switch_num in Hb.
-        exists k2. rewrite <-switch_nat_num.
-        eapply delta0_absolutness' with (rho0 := sigma) in Hb.
-        apply Hb.
+        * intros ??. now apply PA_std_axioms.
+      + apply Σ1_ternary_complete; auto.
+        intros sigma. rewrite <-switch_num in H53.
+        exists k3, k4.
+        assert ((inu k1 .: inu k2 .: inu k3 .: inu k4 .: inu n .: rho) ⊨ β[up (up (num k0)..)][(num k4)..][(num k3)..]).
+        eapply bound_ext with (N:=0).
+        eapply subst_bound with (N:=1).
+        eapply subst_bound with (N:=2).
+        eapply subst_bound with (N:=3); auto.
+        intros [|[|[|[]]]]; cbn; solve_bounds.
+        rewrite ?num_subst. apply closed_num.
+        intros [|[|[]]]; cbn; solve_bounds.
+        apply closed_num.
+        intros [|[]]; cbn; solve_bounds.
+        apply closed_num.
+        lia.
+        rewrite !sat_comp. rewrite !sat_comp in H53.
+        eapply bound_ext. apply Hb1. 2 : apply H53.
+        intros [|[|[]]]; cbn; rewrite ?num_subst, ?eval_num; try reflexivity; try lia.
+        eapply delta0_absolutness' in H.
+        rewrite !switch_nat_num in H.
+        apply H.
         * eapply subst_bound with (N:=1).
-          eapply subst_bound with (N:=2); eauto.
-          intros [|[]] ?; cbn; try rewrite num_subst; [solve_bounds | apply closed_num | lia].
-          intros [|] ?; cbn; [apply closed_num |lia].
-        * repeat apply subst_delta0; auto.
+          eapply subst_bound with (N:=2).
+          eapply subst_bound; eauto.
+          intros[|[|[]]]; cbn; solve_bounds.
+          rewrite !num_subst. apply closed_num.
+          intros[|[]]; cbn; solve_bounds. apply closed_num.
+          intros[]; cbn; solve_bounds. apply closed_num.
+        * now repeat eapply subst_delta0.
         * apply axioms.
-        * apply PA_std_axioms.
-        * apply Hb1.
-        * intros [|[]]; solve_bounds.
-      + apply axioms.
-      + apply axioms.
-      + apply axioms.
+        * intros ??. now apply PA_std_axioms.
+    Unshelve. all: auto.
   Qed.
 
 End Model.
