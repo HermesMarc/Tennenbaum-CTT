@@ -21,15 +21,13 @@ Instance ff : falsity_flag := falsity_on.
 
 
 Definition represents ϕ f := forall x, Q ⊢I ∀ ϕ[up (num x)..] <--> $0 == num (f x).
-Definition CT_Q :=
-  forall f : nat -> nat, exists ϕ, bounded 3 ϕ /\ inhabited(delta0 ϕ) /\ represents (∃ ϕ) f.
-Definition WCT_Q :=
-  forall f : nat -> nat, ~ ~ exists ϕ, bounded 3 ϕ /\ inhabited(delta0 ϕ) /\ represents (∃ ϕ) f.
+Definition CT_Q := forall f : nat -> nat, exists ϕ, bounded 3 ϕ /\ inhabited(delta0 ϕ) /\ represents (∃ ϕ) f.
+Definition WCT_Q := forall f : nat -> nat, ~ ~ exists ϕ, bounded 3 ϕ /\ inhabited(delta0 ϕ) /\ represents (∃ ϕ) f.
 
 
 Definition strong_repr ϕ (p : nat -> Prop) := (forall x, p x -> Q ⊢I ϕ[(num x)..]) /\ (forall x, ~ p x -> Q ⊢I ¬ϕ[(num x)..]).
-Definition RT_strong := forall p : nat -> Prop, Dec p -> exists ϕ, bounded 1 ϕ /\ inhabited(sigma1 ϕ) /\ strong_repr ϕ p.
-Definition WRT_strong := forall p : nat -> Prop, Dec p ->  ~ ~ exists ϕ, bounded 1 ϕ /\ inhabited(sigma1 ϕ) /\ strong_repr ϕ p.
+Definition RT_strong := forall p : nat -> Prop, Dec p -> exists ϕ, bounded 2 ϕ /\ inhabited(delta0 ϕ) /\ strong_repr (∃ ϕ) p.
+Definition WRT_strong := forall p : nat -> Prop, Dec p ->  ~ ~ exists ϕ, bounded 2 ϕ /\ inhabited(delta0 ϕ) /\ strong_repr (∃ ϕ) p.
 
 
 Definition weak_repr ϕ (p : nat -> Prop) := (forall x, p x <-> Q ⊢I ϕ[(num x)..]).
@@ -65,14 +63,14 @@ Proof.
   intros ct p Dec_p.
   destruct (Dec_decider_nat _ Dec_p) as [f Hf]. 
   destruct (ct f) as [ϕ [b2 [[s1] H]]].
-  pose (Φ := (∃ ϕ)[(num 0)..]).
+  pose (Φ := ϕ[up (num 0)..]).
   exists Φ. repeat split; unfold Φ.
-  { eapply subst_bound with (N:=2).
-    - now solve_bounds.  
-    - intros [|[]]; solve_bounds. }
-  { apply subst_sigma1. apply Sigma_exists. now constructor. }
-  all: intros x; specialize (H x); rewrite up_switch.
-  all: eapply AllE with (t := num 0) in H; cbn -[Q] in H.
+  { eapply subst_bound with (N:=3).
+    - auto.
+    - intros [|[|[|[]]]]; solve_bounds. admit. }
+  { now apply subst_delta0. }
+  all: intros x; specialize (H x).
+(*   all: eapply AllE with (t := num 0) in H; cbn -[Q] in H.
   all: apply prv_split in H; destruct H as [H1 H2].
   - intros px%Hf. symmetry in px.
     eapply num_eq with (Gamma := Q)(p := intu) in px; [|firstorder].
@@ -82,35 +80,14 @@ Proof.
     apply II. eapply IE.
     {eapply Weak; [apply E|now right]. }
     eapply IE; [|apply Ctx; now left].
-    rewrite num_subst in H1. eapply Weak; [apply H1|now right].
-Qed.
+    rewrite num_subst in H1. eapply Weak; [apply H1|now right]. *)
+Admitted.
 
 
 Lemma WCT_WRTs :
   WCT_Q -> WRT_strong.
 Proof.
-  intros wct p Dec_p.
-  destruct (Dec_decider_nat _ Dec_p) as [f Hf]. 
-  apply (DN_chaining (wct f)), DN. intros [ϕ [b2 [[s1] H]]].
-  pose (Φ := (∃ ϕ)[(num 0)..]).
-  exists Φ. repeat split; unfold Φ.
-  { eapply subst_bound with (N:=2).
-    - now solve_bounds.  
-    - intros [|[]]; solve_bounds. }
-  { apply subst_sigma1. apply Sigma_exists. now constructor. }
-  all: intros x; specialize (H x); rewrite up_switch.
-  all: eapply AllE with (t := num 0) in H; cbn -[Q] in H.
-  all: apply prv_split in H; destruct H as [H1 H2].
-  - intros px%Hf. symmetry in px.
-    eapply num_eq with (Gamma := Q)(p := intu) in px; [|firstorder].
-    eapply IE. apply H2. now rewrite num_subst.
-  - intros npx. assert (0 <> f x) as E by firstorder.
-    apply num_neq with (Gamma := Q)(p := intu) in E; [|firstorder].
-    apply II. eapply IE.
-    {eapply Weak; [apply E|now right]. }
-    eapply IE; [|apply Ctx; now left].
-    rewrite num_subst in H1. eapply Weak; [apply H1|now right].
-Qed.
+Admitted.
 
 
 Lemma CT_RTw :

@@ -40,18 +40,7 @@ Section Delta0.
   Inductive delta0 : form -> Type :=
   | Delta_fal :  delta0 ⊥
   | Delta_eq : forall t s,  delta0 (t == s)
-  (* | Delta_lt : forall t s,  delta0 (t ⧀ s) *)
   | Delta_Conj : forall α β b,  delta0 α -> delta0 β ->  delta0 (bin b α β).
-
-  Inductive Delta0 : form -> Type :=
-  | Delta_id : forall α, delta0 α ->  Delta0 α
-  | Delta_bounded_exist : forall α t,  Delta0 α -> Delta0 (∃ $0 ⧀ t`[↑] ∧ α)
-  | Delta_bounded_forall : forall α t,  Delta0 α -> Delta0 (∀ $0 ⧀ t`[↑] --> α).
-
-
-  Inductive sigma1 : form -> Type :=
-  | Sigma_Delta : forall α, delta0 α -> sigma1 α
-  | Sigma_exists : forall α, sigma1 α -> sigma1 (∃ α).
 
 
     Ltac invert_delta1 :=
@@ -80,28 +69,6 @@ Section Delta0.
   Qed.
 
 
-  Lemma inversion_delta0_lt α : 
-    delta0 (∃ α) -> { s &{ t & α = t`[↑] == σ (s`[↑] ⊕ $0) }}.
-  Proof.
-    intros H. invert_delta.
-  Qed.
-
-  Lemma inversion_delta0_forall α : 
-    Delta0 (∀ α) ->  { '(ϕ, t) & (Delta0 ϕ * (α = $0 ⧀ t`[↑] --> ϕ))%type}.
-  Proof.
-    intros H. 
-    inversion H; subst.
-    + inversion X.
-    + apply Eqdep_dec.inj_pair2_eq_dec in H1; try decide equality.
-      exists (α0, t). split; auto.
-  Qed.
-
-  Lemma inversion_delta0_exists α : Delta0 (∃ α) -> {ϕ & (Delta0 ϕ * (α = $0 ⧀ $1 ∧ ϕ))%type}.
-  Proof.
-    intros H. inversion H; subst.
-  Admitted.
-
-
   (* Formulas stay at their level of the hierarchy under substitions. *)
   
   Fact subst_delta0 {ff : falsity_flag} phi sigma : 
@@ -109,15 +76,6 @@ Section Delta0.
   Proof.
     induction 1; now constructor.
   Qed.
-
-  Fact subst_sigma1 {ff : falsity_flag} phi sigma : 
-    sigma1 phi -> sigma1 phi[sigma].
-  Proof.
-    intros S. revert sigma. induction S; intros sigma.
-    - now apply Sigma_Delta, subst_delta0.
-    - now apply Sigma_exists.
-  Qed.  
-
 
 
   (* Numerals are closed terms. *)
@@ -166,32 +124,13 @@ Section Delta0.
     - constructor; eapply subst_bound_t with (N := N); auto.
       all: now inversion HN.
     - constructor. apply IHphi with (N:= S N).
-      admit.
-      admit.
-  Admitted.
-
-
-  Lemma subst_bound' N phi sigma B :
-    bounded N phi -> (forall n, n < N -> bounded_t B (sigma n) ) -> bounded B phi[sigma].
-  Proof.
-    intros H. revert sigma B. induction H.
-    all: intros sigma B HB.
-    - constructor. intros t Ht. depelim Ht.
-    - constructor. 
-      + eapply IHbounded1; eauto.
-      + eapply IHbounded2; eauto.
-    - constructor. all: admit.
-    - constructor; fold subst_form. 
-      apply IHbounded. intros x.
-      assert (x < S n <-> x < n \/ x = n) as -> by lia.
-      intros [Hx| ->].
-      + destruct x.
+      + now invert_bounds.
+      + intros [|n] hn.
         * constructor. lia.
-        * admit.
-      + 
-  Admitted.
-
-
+        * eapply subst_bound_t.
+          ** apply HB. lia.
+          ** intros ??. constructor. lia.
+  Qed.
 
 End Delta0.
 
@@ -390,147 +329,6 @@ Section Closed.
 
 End Closed.
 
-Section Closed.
-  
-
-
-  Lemma TEMP_NAME_2 k: 
-    forall N x, bounded_t (k + N) (iter (subst_term ↑) k (var x)) ->  bounded_t N (var x).
-  Proof.
-    induction k.
-    - auto.
-    - intros N x.
-      assert (S k + N = k + S N) as -> by lia.
-      cbn. rewrite iter_switch.
-      intros ?%IHk. inversion H0. constructor. lia.
-  Qed.
-
-  Lemma TEMP_NAME_3 t : 
-    forall N k, bounded_t (k + N) (iter (subst_term ↑) k t) ->  bounded_t N t.
-  Proof.
-    induction t.
-    - intros ??. apply TEMP_NAME_2.
-    - intros N k H. constructor.
-      intros t Ht. eapply IH; auto.
-  Admitted.
-
-
-  Lemma How α t : 
-    bounded 0 (∃ $0 ⧀ t`[↑] ∧ α) -> bounded 1 α * {n & Q ⊢I t == num n}.
-  Proof.
-    intros H. split.
-    - do 2 invert_bounds; assumption.
-    - apply closed_term_is_num; [now intros ?|]. 
-      do 2 invert_bounds. clear H6. 
-      do 2 invert_bounds. clear H5. 
-      now apply (TEMP_NAME_3 _ _ 2).
-  Qed.
-
-  Lemma Q_lt_cases n : 
-    Q ⊢I ∀ $0 ⧀ num (S n) --> $0 ⧀ num n ∨ $0 == num n.
-  Proof.
-  Admitted.
-
-  Lemma prv_DeMorgan {p : peirce} Γ α β : 
-    Γ ⊢ (¬ α) ∧ (¬ β) --> ¬ (α ∨ β).
-  Proof.
-    apply II, II. eapply DE.
-    - apply Ctx. now left.
-    - eapply IE. 2: apply Ctx; now left.
-      eapply CE1, Ctx; cbn; auto.
-    - eapply IE. 2: apply Ctx; now left.
-      eapply CE2, Ctx; cbn; auto.
-  Qed.
-  
-  Lemma TEMP_NAME n α : 
-    (forall x, x < n -> ~ Q ⊢I α[(num x)..]) -> Q ⊢I ¬ (∃ $0 ⧀ num n ∧ α).
-  Proof.
-    induction n; intros H.
-    - apply II. admit.
-    - 
-  Admitted.
-
-  Lemma dec_bounded_exists α t : 
-    delta0 α -> bounded 0 (∃ $0 ⧀ t`[↑] ∧ α) -> Q_dec (∃ $0 ⧀ t`[↑] ∧ α).
-  Proof.
-    intros delta_α ( b1 & [n ] )%How.
-    refine (let D := dec_lt_bounded_sig n (fun n => Q ⊢I α[(num n)..]) _ in _).
-    destruct D as [[x Hx]|h].
-    - left. apply ExI with (t0 := num x). 
-      cbn -[Q]; apply CI.
-      + admit.
-      + apply Hx.
-    - right. apply TEMP_NAME in h.
-  Admitted.
-
-
-
-  Lemma How2 α n : 
-    bounded 0 (∃ $0 ⧀ num n ∧ α) -> bounded 1 α.
-  Proof.
-    intros H. do 2 invert_bounds; assumption.
-  Qed.
-
-
-  Lemma Q_dec_bounded_exists α n :
-    (forall x, Q_dec α[(num x)..]) -> bounded 0 (∃ $0 ⧀ num n ∧ α) -> Q_dec (∃ $0 ⧀ num n ∧ α).
-  Proof.
-    intros Dec_α b1%How2.
-    induction n as [| n [h|h]].
-    - right. cbn -[Q]. apply II. eapply ExE.
-      { apply Ctx; now left. }
-      cbn -[Q]. eapply IE.
-      { eapply Weak with (A:=Q). apply (not_lt_zero_prv _ $0).
-        now do 2 right. }
-      cbn -[Q]. eapply CE1, Ctx. now left.
-    - left. admit.
-    - destruct (Dec_α n).
-      { left. eapply ExI with (t:=num n); cbn -[Q].
-        rewrite !num_subst. apply CI; auto.
-        eapply ExI with (t:=num 0); cbn -[Q num].
-        rewrite !num_subst.
-        apply eq_succ, symmetry; try now intros ?.
-        rewrite plus_n_O at 2.
-        apply num_add_homomorphism.
-        now intros ?. 
-      }
-      right. apply II.
-      eapply ExE; cbn - [Q].
-      { apply Ctx. now left. }
-      pose (ϕ := $0 ⧀ num n ∨ $0 == num n).
-      apply IE with (phi:= ϕ).
-      + apply II. eapply DE.
-        * apply Ctx; now left.
-        * eapply IE.
-          { eapply Weak; [apply h|].
-            do 4 right. now cbn. }
-          eapply ExI with (t:= $0).
-          cbn -[Q]; apply CI.
-          { rewrite !num_subst in *. apply Ctx; now left. }
-          enough (α[$0..] = α) as ->. 
-          eapply CE2, Ctx.
-          now right; right; left.
-          admit.
-        * admit.
-      + admit.
-  Admitted.
-    
-
-  
-  Theorem Q_dec_closed_Delta0 : 
-    forall α (H : Delta0 α), bounded 0 α -> Q_dec α.
-  Proof. 
-    change (forall α (H : Delta0 α), (fun h a => bounded 0 a -> Q_dec a) H α).
-    apply Delta0_rect; intros α delta_α H.
-    - admit. (* Just need to move this lemma out of the section *)
-    - intros B.
-  Abort.
-
-
-End Closed.
-
-
-
 
 Notation "N⊨ phi" := (forall rho, @sat _ _ nat interp_nat _ rho phi) (at level 40).
 
@@ -611,53 +409,3 @@ Section Sigma1.
   Qed.
 
 End Sigma1.
-
-
-
-Lemma sigma1_complete {ϕ} :
-  sigma1 ϕ -> 
-  forall N s, bounded N ϕ -> 
-  (forall n, n < N -> bounded_t 0 (s n) ) -> 
-  forall rho, @sat _ _ _ interp_nat _ rho ϕ[s] -> 
-  Q ⊢I ϕ[s].
-Proof.
-  induction 1; intros N s HN Hs rho Hrho.
-  - eapply Q_delta0_complete'.
-    4: apply Hrho.
-    + eapply subst_bound; eauto.
-    + now apply subst_delta0.
-    + intros ???. now apply PA_std_axioms.
-  - cbn -[Q]. destruct Hrho as [n Hn].
-    eapply ExI with (t:= num n).
-    rewrite subst_comp.
-    eapply IHX.
-    + admit.
-    + intros [|] ?; cbn. apply closed_num.
-      admit.
-    + rewrite <-subst_comp, switch_num, inu_nat_id.
-      apply Hn.
-Admitted.
-
-
-
-Lemma sigma1_complete' N {ϕ} s :
-  sigma1 ϕ -> 
-  bounded N ϕ -> 
-  (forall n, n < N -> bounded_t 0 (s n) ) -> 
-  Q ⊢I (∃ ϕ)[s] -> 
-  exists n, Q ⊢I ϕ[up s][(num n)..].
-Proof.
-  intros S1 HN Hs H%soundness.
-  specialize (H _ interp_nat (fun _ => 0)) as [n Hn].
-  { intros ??. now apply Q_std_axioms. }
-  exists n. rewrite <-(inu_nat_id n), <-switch_num in Hn.
-  rewrite subst_comp in Hn.
-  eapply sigma1_complete in Hn. 
-  - now rewrite subst_comp.
-  - assumption.
-  - apply HN.
-  - intros [] ?; cbn. 
-    + apply closed_num.
-    + unfold ">>". repeat rewrite subst_closed_term.
-      all: apply Hs; lia.  
-Qed.

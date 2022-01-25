@@ -1,4 +1,4 @@
-Require Import FOL Peano Tarski Deduction CantorPairing NumberTheory Synthetic DecidabilityFacts Coding Church.
+Require Import FOL Peano Tarski Deduction CantorPairing NumberTheory Synthetic DecidabilityFacts Formulas Coding Church.
 Require Import Lia.
 Require Import Equations.Equations Equations.Prop.DepElim.
 
@@ -109,11 +109,12 @@ Section Model.
     pose (p n := ~ div_pi n (g n)).
     enough (Dec p) as Dec_p.
     apply (DN_remove (wrt _ Dec_p)).
-    intros [np (b1 & _ & H1 & H2)] nonStd.
-    unshelve refine (let H:= Coding_nonStd_unary _ _ _ _ Hψ _ _ _ b1 in _); auto.
+    intros [ϕ (b1 & _ & H1 & H2)] nonStd.
+    unshelve refine (let H:= Coding_nonStd_unary _ _ _ _ Hψ _ _ (∃ ϕ) _ in _); auto.
     - now apply nonStd_notStd.
     - intros e. apply MP_Dec_stable; auto.
       destruct eq as [eq]. constructor. intros n. apply eq.
+    - now solve_bounds.
     - enough (~~False) by tauto.
       apply (DN_chaining H), DN.
       intros [cp Hcp]; clear H.
@@ -126,8 +127,15 @@ Section Model.
         { repeat solve_bounds.
           eapply bounded_up; [apply Hψ|lia]. }
         2: {  cbn in Hc1; apply Hc1.
-              rewrite <-switch_num. apply H1.
-              intros ??; apply axioms; now constructor. }
+              destruct (H1 D I (fun _ => g c)) as [d Hd].
+              intros ??; apply axioms; now constructor.
+              exists d. rewrite <-switch_up_num.
+              eapply bound_ext with (N:=1). 3: apply Hd.
+              eapply subst_bound. 1: eauto.
+              intros [|[]]; solve_bounds.
+              cbn. rewrite num_subst. apply closed_num.
+              intros [|]; solve_bounds.
+          }
         intros [|[]]; cbn; [reflexivity| |lia].
         intros _. unfold g. now rewrite Hc.
       * specialize (H2 _ h). apply soundness in H2.
@@ -135,7 +143,7 @@ Section Model.
         intros ??; apply axioms; now constructor.
         setoid_rewrite switch_num. cbn in Hc2.
         eapply bound_ext with (N:= 1)(sigma:= inu c .: cp .: (fun _ => g c)).
-        { apply b1. }
+        { now solve_bounds. }
         intros []; cbn; [reflexivity|lia].
         apply Hc2. destruct H' as [d Hd].
         exists d. split.
