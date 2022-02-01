@@ -21,26 +21,189 @@ Section Model.
 
   (* We also assume the existence of a formula which represents the prime number function *)
   Variable ψ : form.
-  Variable Hψ : bounded 3 ψ /\ (forall x, Q ⊢I ∀ (∃ ψ)[up (num x)..] <--> $0 == num (Irred x) ).
+  Variable Hψ : bounded 2 ψ /\ (forall x, Q ⊢I ∀ ψ[up (num x)..] <--> $0 == num (Irred x) ).
 
 
   Definition div e d := exists k : D, e i⊗ k = d.
   Definition div_num n (d : D) := exists e, inu n i⊗ e = d.
   Definition Div_nat (d : D) := fun n => div_num n d.
-  Definition div_pi n a :=  (inu n .: (fun _ => a)) ⊨ (∃ ((∃ ψ) ∧ ∃ $1 ⊗ $0 == $3)).
+  Definition div_pi n a :=  (inu n .: (fun _ => a)) ⊨ (∃ (ψ ∧ ∃ $1 ⊗ $0 == $3)).
 
+  Variable surj_form_ : { Φ : nat -> form & surj Φ }.
+  Variable enumerable_Q_prv : forall Φ : nat -> form, enumerable (fun n => Q ⊢I (Φ n)).
+  
+  Definition Φ := projT1 surj_form_.
+  Definition surj_form := projT2 (surj_form_).
+  Definition A n := Q ⊢I ¬(Φ n)[(num n)..].
+  Definition B n := Q ⊢I (Φ n)[(num n)..].
+
+
+  Lemma Disjoint_AB : forall n, ~(A n /\ B n).
+  Proof.
+    unfold A, B. intros n [A_n B_n].
+    apply Q_consistent.
+    eapply IE; eauto.
+  Qed.
+
+  Definition Insep' :=
+    exists A B : nat -> Prop,
+      enumerable A /\ enumerable B /\ 
+      (forall n, ~ (A n /\ B n) ) /\ 
+      (forall D, Dec D -> 
+        (forall n, A n -> D n) ->
+        (forall n, ~ (B n /\ D n)) -> False).
 
   Definition Insep :=
-    exists α β, 
+    exists α β,
       bounded 3 α /\ inhabited(delta0 α) /\ bounded 3 β /\ inhabited(delta0 β) /\ 
       (forall n, ~ Q ⊢I ((∃∃α) ∧ (∃∃β))[(num n)..] ) /\ 
       (forall G, Dec G -> (forall n, Q ⊢I (∃∃α)[(num n)..] -> G n) -> 
         (forall n, ~ (Q ⊢I (∃∃β)[(num n)..] /\ G n)) -> False).
 
+  Lemma Insep_ :
+    RT_strong -> Insep'.
+  Proof.
+    intros rt.
+    exists A, B. repeat split; auto.
+    1,2 : apply enumerable_Q_prv.
+    { apply Disjoint_AB. }
+    intros G Dec_G.
+    destruct (rt G Dec_G) as [γ [? [? []]]],
+      (surj_form (∃ γ)) as [c Hc].
+    rewrite <-Hc in *.
+    unfold A, B in *; fold Φ in *.
+    intros ? ?%(fun h => h c).
+    enough (~ G c); auto.
+  Qed.
+
+  Lemma CT_Inseparable : 
+    CT_Q -> Insep.
+  Proof.
+    intros ct.
+    destruct (Insep_ (CT_RTs ct)) as (A & B & HA & HB & disj & H).
+    destruct ((CT_RTw ct) A HA) as [α (Ha0 & [Ha1] & Hα)],
+            ((CT_RTw ct) B HB) as [β (Hb0 & [Hb1] & Hβ)].
+    exists α, β. repeat split; auto; unfold weak_repr in *.
+    - intros n h%soundness. apply (disj n).
+      rewrite Hα, Hβ.
+      split; apply Σ1_ternary_complete; auto.
+      all: intros rho; specialize (h _ interp_nat rho);
+            apply h; apply Q_std_axioms.
+    - setoid_rewrite <-Hα.
+      setoid_rewrite <-Hβ.
+      apply H.
+  Qed.  
+
+
+  Lemma LEM_ternary phi : 
+    delta0 phi -> bounded 3 phi -> ⊨ ∀∀∀ phi ∨ ¬ phi.
+  Proof.
+    intros delta0_phi binary_phi rho e1 e2 e3.
+    induction phi using form_ind_falsity_on.
+    - cbn. tauto.
+    - destruct P.
+    - apply inversion_bounded_bin in binary_phi.
+      apply inversion_delta0_bin in delta0_phi.
+      specialize (IHphi1 (fst delta0_phi) (proj1 binary_phi)).
+      specialize (IHphi2 (snd delta0_phi) (proj2 binary_phi) ).
+      destruct b.
+      all: fold sat in *; cbn in *; tauto.
+    - cbn. eapply Peano.eq_dec. apply axioms.
+    - inversion delta0_phi.
+  Qed.
+
+  Lemma LEM_bounded_exist_ternary {phi} sigma N : 
+    bounded N phi -> (forall rho, definite (rho ⊨ phi)) -> sigma ⊨ (∃ $0 ⧀ $N ∧ phi) \/ ~ sigma ⊨ (∃ $0 ⧀ $N ∧ phi).
+  Proof.
+  Admitted.
+  
+
+  Lemma Sanitiy p b :
+    (exists x y : nat, x < b /\ y < b /\ p x y) <-> (exists x, x < b /\ exists y, y < b /\ p x y).
+  Proof.
+    split.
+    - intros [x [y Hxy]]. exists x. split.
+      apply Hxy. exists y. apply Hxy.
+    - intros [x [Hx [y Hy]]].
+      exists x, y. repeat split; tauto.
+  Qed.
+
+  Lemma TEMP p :
+    (forall x y : nat, definite (p x y)) -> forall b, definite (exists x y, x < b /\ y < b /\ p x y).
+  Proof.
+    intros Hp b.
+    induction b.
+    - right. intros [ ? []]. lia.
+    - destruct IHb as [(x & y & ?)|h].
+      + left. exists x, y. repeat split; try lia; try tauto.
+      + destruct (Hp b b).
+        * left. exists b, b. repeat split; try lia; try tauto.
+        * assert (forall x y, x < S y <-> x = y \/ x < y) as L by lia.
+          right; intros ( x & y & [->|]%L & [->|]%L & ?).
+          ** auto.
+          ** apply h. exists b, y.
+             repeat split; try lia; try tauto.
+  Admitted.
+
+
   Lemma LEM_bounded_exist_ternary {phi} sigma : 
     delta0 phi -> bounded 3 phi -> forall b x, (x .: b .: sigma) ⊨ (∃∃ $0 ⧀ $3 ∧ $1 ⧀ $3 ∧ phi) \/ ~ (x .: b .: sigma) ⊨ (∃∃ $0 ⧀ $3 ∧ $1 ⧀ $3 ∧ phi).
   Proof.
+    intros delta0_phi ternary_phi ρ N.
+    pose (Phi := ∀ (∃∃ $0 ⧀ $3 ∧ $1 ⧀ $3 ∧ phi) ∨ ¬ (∃∃ $0 ⧀ $3 ∧ $1 ⧀ $3 ∧ phi)).
+    assert (H : forall d rho, (d.:rho) ⊨ Phi).
+    apply induction. apply axioms.
+    repeat solve_bounds.
+    eapply bounded_up. apply ternary_phi. lia.
+    eapply bounded_up. apply ternary_phi. lia.
+    - intros rho y. cbn. right.
+      now intros (? & ? & [?%nolessthen_zero ] & ?).
+    - intros n IHN rho y. cbn.
+      destruct (IHN rho y) as [IH|IH]; fold sat in *; cbn in IH.
+      + left. destruct IH as (d0 & d1 & Hd). exists d0, d1. repeat split.
+        ++  destruct Hd as [[[k ->] _] _].
+            exists (iσ k). now rewrite add_rec_r.
+        ++  destruct Hd as [[_ [k ->]] _].
+            exists (iσ k). now rewrite add_rec_r.
+        ++  eapply bound_ext. apply ternary_phi.
+            2 : apply Hd.
+            intros [|[|[]]]; solve_bounds.
+      + specialize (LEM_ternary phi delta0_phi ternary_phi) as lem_phi.
+        destruct (lem_phi (fun _ => i0) y n n) as [HN|HN]; fold sat in *.
+        ++  left. exists n, n. repeat split.
+            exists i0. now rewrite add_zero_r.
+            exists i0. now rewrite add_zero_r.
+            eapply bound_ext. apply ternary_phi.
+            2 : apply HN.
+            intros [|[|[]]]; solve_bounds.
+        ++  right. intros H. apply IH.
+            destruct H as (x0 & x1 & [Hx1%lt_S Hx0%lt_S] & Hx); auto.
+            exists x1, x0. repeat split.
+            destruct Hx0 as [| ->]; auto.
+            exfalso. apply HN.
+            eapply bound_ext. apply binary_phi.
+            2 : apply Hx2.
+            intros [|[]]; solve_bounds.
+            eapply bound_ext. apply binary_phi.
+            2 : apply Hx2.
+            intros [|[]]; solve_bounds.
+            apply axioms.
+      - intros y. specialize (H N (fun _ => N) y).
+        fold sat in H; cbn in *. 
+        destruct H as [h|h].
+        left. destruct h as [d Hd]. 
+        exists d. split. apply Hd.
+        eapply bound_ext. apply binary_phi.
+        2 : apply Hd.
+        intros [|[]]; solve_bounds.
+        right. intros h1. apply h.
+        destruct h1 as [d Hd]. 
+        exists d. split. apply Hd.
+        eapply bound_ext. apply binary_phi.
+        2 : apply Hd.
+        intros [|[]]; solve_bounds.
   Admitted.
+
 
   Lemma nonDecDiv :
     Insep -> Stable std -> nonStd D -> ~ ~ exists d : D, ~ Dec (fun n => div_pi n d).
@@ -50,86 +213,86 @@ Section Model.
     enough (forall n rho, ((inu n).:rho) ⊨ phi ) as H.
     eapply Overspill_DN in H; eauto.
     - refine (DN_chaining (Coding_nonstd_binary_Definite _ _ _ _ _ _ _ (∃∃ $0 ⧀ $3 ∧ $1 ⧀ $3 ∧ α) _ _) _); eauto.
-      {apply nonStd_notStd. now exists d. }
-      { repeat solve_bounds.
-        eapply bounded_up; eauto; lia. }
-      { intros b u.
-        specialize (LEM_bounded_exist_ternary (fun _ => i0) Ha0 Ha1 b (inu u)) as [h|h].
-        - left. intros ?. eapply bound_ext with (N := 2).
-          3 : apply h.
-          repeat solve_bounds. eapply bounded_up; eauto.
-          intros [|[]]; try reflexivity; lia.
-        - right. intros nh. apply h.
-          eapply bound_ext with (N := 2).
-          3 : apply nh.
-          repeat solve_bounds. eapply bounded_up; eauto.
-          intros [|[]]; try reflexivity; lia.
-      }
-      apply (DN_chaining H).
-      apply DN. clear H.
-      intros [e [? He]] [c Hc]%(fun h => h e).
-      exists c. intros Dec_div_c.
-      eapply (Insepa _ Dec_div_c).
-      + intros n A_n. unfold Div_nat.
-        specialize (Hc n (fun _ => e)) as [Hc _].
-        cbn in Hc. destruct Hc as [ d' [H1 H2] ].
-        * assert (N⊨ (∃∃α)[(num n)..]) as A_n'.
-          { intros rho. eapply soundness.
-            - apply A_n.
-            - apply Q_std_axioms.
-          }
-          apply Σ1_ternary_complete' in A_n'; auto.
-          destruct A_n' as (a & b & Hab).
-          exists (inu a), (inu b). repeat split; [apply num_lt_nonStd; auto|apply num_lt_nonStd; auto| ].
-          apply soundness in Hab.
-          specialize (Hab D I (fun _ => i0)). rewrite !sat_comp in Hab.
-          eapply bound_ext. apply Ha1. 2: apply Hab.
-          intros [|[|[]]] ?; cbn; try now rewrite ?num_subst, ?eval_num; try lia.
-          intros ??. apply axioms. now constructor.
-        * exists d'. split.
-          eapply bound_ext. apply Hψ. 2: apply H1.
-          intros [|[]]; try reflexivity; try lia.
-          cbn. apply H2.
-      + intros n [B_n C_n].
-        assert (N⊨ (∃∃β)[(num n)..]) as B_n'.
-        { intros rho. eapply soundness. 
-          - apply B_n.
+    {apply nonStd_notStd. now exists d. }
+    { repeat solve_bounds.
+      eapply bounded_up; eauto; lia. }
+    { intros b u.
+      specialize (LEM_bounded_exist_ternary (fun _ => i0) Ha0 Ha1 b (inu u)) as [h|h].
+      - left. intros ?. eapply bound_ext with (N := 2).
+        3 : apply h.
+        repeat solve_bounds. eapply bounded_up; eauto.
+        intros [|[]]; try reflexivity; lia.
+      - right. intros nh. apply h.
+        eapply bound_ext with (N := 2).
+        3 : apply nh.
+        repeat solve_bounds. eapply bounded_up; eauto.
+        intros [|[]]; try reflexivity; lia.
+    }
+    apply (DN_chaining H).
+    apply DN. clear H.
+    intros [e [? He]] [c Hc]%(fun h => h e).
+    exists c. intros Dec_div_c.
+    eapply (Insepa _ Dec_div_c).
+    + intros n A_n. unfold Div_nat.
+      specialize (Hc n (fun _ => e)) as [Hc _].
+      cbn in Hc. destruct Hc as [ d' [H1 H2] ].
+      * assert (N⊨ (∃∃α)[(num n)..]) as A_n'.
+        { intros rho. eapply soundness.
+          - apply A_n.
           - apply Q_std_axioms.
         }
-        apply Σ1_ternary_complete' in B_n'; auto.
-        destruct B_n' as (a & b & Hab).
+        apply Σ1_ternary_complete' in A_n'; auto.
+        destruct A_n' as (a & b & Hab).
+        exists (inu a), (inu b). repeat split; [apply num_lt_nonStd; auto|apply num_lt_nonStd; auto| ].
         apply soundness in Hab.
-        assert ((fun _ => e) ⊨ (∃∃ $0 ⧀ $2 ∧ $1 ⧀ $2 ∧ β[up (up (num n)..)] )) as Heβ.
-        { cbn. exists (inu a), (inu b). repeat split; [apply num_lt_nonStd; auto|apply num_lt_nonStd; auto| ].
-          specialize (Hab D I (fun _ => i0)). rewrite !sat_comp in Hab.
-          rewrite sat_comp.
-          eapply bound_ext. apply Hb1. 2: apply Hab.
-          intros [|[|[]]] ?; cbn; try now rewrite ?num_subst, ?eval_num; try lia.
-          intros ??. apply axioms. now constructor. }
-        specialize (Hc n (fun _ => e)) as [_ Hc].
-        destruct Hc as (k1 & k2 & [Hk2 Hk1] & Hk12); fold sat in *.
-        * destruct C_n as [d' Hd']. exists d'. split.
-          eapply bound_ext. apply Hψ. 2 : apply Hd'.
-          intros [|[]]; solve_bounds.
-          apply Hd'.
-        * cbn in Heβ, Hk12, Hk1, Hk2. destruct Heβ as (k3 & k4 & [Hk4 Hk3] & Hk34).
-          rewrite sat_comp in Hk34.
-          eapply He; fold sat; cbn.
-          apply Hk4.
-          apply Hk3.
-          apply Hk2.
-          apply Hk1.
-          apply num_lt_nonStd with (n:=n); auto.
-          rewrite !sat_comp.
-          split.
-          **  eapply bound_ext. 
-              apply Ha1. 2: apply Hk12.
-              intros [|[|[]]] ?; try reflexivity; try lia.
-          **  eapply bound_ext. 
-              apply Hb1. 2: apply Hk34.
-              intros [|[|[]]] ?; cbn; try reflexivity; try lia.
-              now rewrite !num_subst, eval_num. 
-          Unshelve. exact (fun _ => i0).
+        specialize (Hab D I (fun _ => i0)). rewrite !sat_comp in Hab.
+        eapply bound_ext. apply Ha1. 2: apply Hab.
+        intros [|[|[]]] ?; cbn; try now rewrite ?num_subst, ?eval_num; try lia.
+        intros ??. apply axioms. now constructor.
+      * exists d'. split.
+        eapply bound_ext. apply Hψ. 2: apply H1.
+        intros [|[]]; try reflexivity; try lia.
+        cbn. apply H2.
+    + intros n [B_n C_n].
+      assert (N⊨ (∃∃β)[(num n)..]) as B_n'.
+      { intros rho. eapply soundness. 
+        - apply B_n.
+        - apply Q_std_axioms.
+      }
+      apply Σ1_ternary_complete' in B_n'; auto.
+      destruct B_n' as (a & b & Hab).
+      apply soundness in Hab.
+      assert ((fun _ => e) ⊨ (∃∃ $0 ⧀ $2 ∧ $1 ⧀ $2 ∧ β[up (up (num n)..)] )) as Heβ.
+      { cbn. exists (inu a), (inu b). repeat split; [apply num_lt_nonStd; auto|apply num_lt_nonStd; auto| ].
+        specialize (Hab D I (fun _ => i0)). rewrite !sat_comp in Hab.
+        rewrite sat_comp.
+        eapply bound_ext. apply Hb1. 2: apply Hab.
+        intros [|[|[]]] ?; cbn; try now rewrite ?num_subst, ?eval_num; try lia.
+        intros ??. apply axioms. now constructor. }
+      specialize (Hc n (fun _ => e)) as [_ Hc].
+      destruct Hc as (k1 & k2 & [Hk2 Hk1] & Hk12); fold sat in *.
+      * destruct C_n as [d' Hd']. exists d'. split.
+        eapply bound_ext. apply Hψ. 2 : apply Hd'.
+        intros [|[]]; solve_bounds.
+        apply Hd'.
+      * cbn in Heβ, Hk12, Hk1, Hk2. destruct Heβ as (k3 & k4 & [Hk4 Hk3] & Hk34).
+        rewrite sat_comp in Hk34.
+        eapply He; fold sat; cbn.
+        apply Hk4.
+        apply Hk3.
+        apply Hk2.
+        apply Hk1.
+        apply num_lt_nonStd with (n:=n); auto.
+        rewrite !sat_comp.
+        split.
+        **  eapply bound_ext. 
+            apply Ha1. 2: apply Hk12.
+            intros [|[|[]]] ?; try reflexivity; try lia.
+        **  eapply bound_ext. 
+            apply Hb1. 2: apply Hk34.
+            intros [|[|[]]] ?; cbn; try reflexivity; try lia.
+            now rewrite !num_subst, eval_num. 
+        Unshelve. exact (fun _ => i0).
     - repeat solve_bounds.
       eapply subst_bound with (N:=4).
       eapply subst_bound with (N:=4). eapply bounded_up; eauto. 

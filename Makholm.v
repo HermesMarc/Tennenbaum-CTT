@@ -21,11 +21,12 @@ Section Model.
   Notation "x 'i⧀' y" := (exists d : D, y = iσ (x i⊕ d) ) (at level 40).
 
 
-
   Variable ψ : form.
   Variable Hψ : binary ψ /\ (forall x, Q ⊢I ∀ ψ[up (num x)..] <--> $0 == num (Irred x) ).
 
-  Hypothesis Coding : forall α, binary α -> delta0 α -> PA ⊢TI ∀∀∃∀ $0 ⧀ $3 --> (∃ $0 ⧀ $3 ∧ α) <--> ∃ (ψ ∧ ∃ $1 ⊗ $0 == $3) .
+  Definition obj_Coding := forall α, binary α -> delta0 α -> PA ⊢TI ∀∀∃∀ $0 ⧀ $3 --> (∃ $0 ⧀ $3 ∧ α) <--> ∃ (ψ ∧ ∃ $1 ⊗ $0 == $3). 
+
+  Hypothesis coding : obj_Coding.
 
 
   Definition obj_Insep := 
@@ -39,26 +40,16 @@ Section Model.
   Definition div_num n (d : D) := exists e, inu n i⊗ e = d.
   Definition Div_nat (d : D) := fun n => div_num n d.
 
-
-  Lemma Dec_Div_nat_std : 
-    forall e, std e -> Dec (Div_nat e).
-  Proof.
-  Admitted.
-
-
   Theorem Makholm :
-    obj_Insep -> nonStd D <-> exists d, ~ Dec (Div_nat d).
+    obj_Insep -> nonStd D -> exists d, ~ Dec (Div_nat d).
   Proof.
     intros (α & β & Ha1 & [Ha0] & Hb1 & [Hb0] & Disj & Insepa).
-    split.
-    2 : { intros [d Hd]. exists d. intros H. apply Hd. 
-      now apply Dec_Div_nat_std. }
     intros [e Nstd_e].
-    specialize (Coding α Ha1 Ha0).
+    specialize (coding α Ha1 Ha0).
     pose (X n := (inu n .: (fun _ => e)) ⊨ ((∃ $0 ⧀ $3 ∧ α) )).
-    eapply tsoundness with (rho := (fun _ => e)) in Coding.
-    - cbn in Coding.
-      specialize (Coding e e) as [c Hc].
+    eapply tsoundness with (rho := (fun _ => e)) in coding.
+    - cbn in coding.
+      specialize (coding e e) as [c Hc].
       assert (forall n : nat, (X n) <-> (inu n .: (fun _ => c)) ⊨ (∃ (ψ ∧ ∃ $1 ⊗ $0 == $3)) ).
       + intros n. split.
         -- specialize (Hc (inu n)) as [H _]. 
@@ -94,16 +85,13 @@ Section Model.
            ++ left. apply H, ψ_equiv; auto.
            ++ right. intros nh%H. apply h.
               apply ψ_equiv in nh; auto.
-        --  intros n [m Hm]%(sigma1_complete' 2); auto. 
+        --  intros n [m Hm]%Σ1_complete''; auto. 
             exists (inu m). cbn. split.
             now apply num_lt_nonStd.
             rewrite <-switch_up_num, <-switch_num.
             eapply soundness; eauto.
             intros ??; apply axioms. now constructor.
-            { now apply Sigma_Delta. }
-            { intros [|[]] ?; cbn; try lia.
-              apply closed_num. constructor. admit. (* does not work *) }
-        --  intros n [[m Bnm]%(sigma1_complete' 2) X_n]; auto.
+        --  intros n [[m Bnm]%Σ1_complete'' X_n]; auto.
             eapply tsoundness with (rho := (fun _ => e)) in Disj; auto.
             cbn in Disj. apply Disj.
             exists (inu n). split.
@@ -114,11 +102,8 @@ Section Model.
                 specialize (Bnm D I). exists (inu m).
                 rewrite <-switch_up_num, <-switch_num. apply Bnm.
                 intros ??. apply axioms. now constructor. 
-            ++  now apply Sigma_Delta.
-            ++  intros [|[]] ?; cbn; try lia.
-                apply closed_num. constructor. admit. (* does not work *)
     - intros ??. now apply axioms.
-  Admitted.
+  Qed.
 
 
 End Model.

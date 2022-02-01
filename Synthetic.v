@@ -5,6 +5,8 @@ Require Import ConstructiveEpsilon.
 Definition iffT (X Y : Type) : Type := (X -> Y) * (Y -> X).
 Notation "X <=> Y" := (iffT X Y) (at level 95, no associativity).
 
+Definition surj {X Y} (f : X -> Y) := forall y, exists x, f x = y.
+Definition inj {X Y} (f : X -> Y) := forall x x', f x = f x' -> x = x'.  
 
 Definition definite P := P \/ ~P.
 Definition Definite {X} p := forall x : X, definite (p x).
@@ -13,7 +15,7 @@ Definition stable P := ~~P -> P.
 Definition Stable {X} p := forall x : X, stable (p x).
 Definition DNE := forall P, stable P.
 Definition MP := forall (f : nat -> nat), stable (exists n, f n = 0).
-
+Definition UC X Y := forall R, (forall x:X, exists! y:Y, R x y) -> { f & forall x, R x (f x)}.
 
 Fact LEM_DNE :
   (LEM <-> DNE) /\ (DNE -> MP).
@@ -208,11 +210,3 @@ Proof.
   - destruct H as [x' ], (Hg x') as [x Hx].
     exists x. now rewrite Hx.
 Qed.
-
-
-Fact Markov_quasi_covers {X Y} :
-  Markov X -> quasi_covers X Y -> Discrete Y -> Markov Y.
-Proof.
-Admitted.
-
-

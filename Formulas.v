@@ -367,6 +367,16 @@ Section Sigma1.
     apply closed_num.
   Qed.
 
+  Lemma Σ1_complete'' n :
+    Q ⊢I (∃ α)[(num n)..] -> exists m, Q ⊢I α[up (num n)..][(num m)..].
+  Proof.
+    intros H%soundness.
+    apply Σ1_complete'.
+    specialize (H nat interp_nat).
+    intros ?. apply H.
+    intros ??. now apply Q_std_axioms.
+  Qed.
+
 End Sigma1.
 
 
