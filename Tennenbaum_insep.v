@@ -98,110 +98,88 @@ Section Model.
   Lemma LEM_ternary phi : 
     delta0 phi -> bounded 3 phi -> ⊨ ∀∀∀ phi ∨ ¬ phi.
   Proof.
-    intros delta0_phi binary_phi rho e1 e2 e3.
-    induction phi using form_ind_falsity_on.
-    - cbn. tauto.
-    - destruct P.
-    - apply inversion_bounded_bin in binary_phi.
-      apply inversion_delta0_bin in delta0_phi.
-      specialize (IHphi1 (fst delta0_phi) (proj1 binary_phi)).
-      specialize (IHphi2 (snd delta0_phi) (proj2 binary_phi) ).
-      destruct b.
-      all: fold sat in *; cbn in *; tauto.
-    - cbn. eapply Peano.eq_dec. apply axioms.
-    - inversion delta0_phi.
-  Qed.
+  Admitted.
 
-  Lemma LEM_bounded_exist_ternary {phi} sigma N : 
+  Lemma LEM_bounded_exist_Nary {phi} sigma N : 
     bounded N phi -> (forall rho, definite (rho ⊨ phi)) -> sigma ⊨ (∃ $0 ⧀ $N ∧ phi) \/ ~ sigma ⊨ (∃ $0 ⧀ $N ∧ phi).
   Proof.
   Admitted.
-  
 
-  Lemma Sanitiy p b :
-    (exists x y : nat, x < b /\ y < b /\ p x y) <-> (exists x, x < b /\ exists y, y < b /\ p x y).
-  Proof.
-    split.
-    - intros [x [y Hxy]]. exists x. split.
-      apply Hxy. exists y. apply Hxy.
-    - intros [x [Hx [y Hy]]].
-      exists x, y. repeat split; tauto.
-  Qed.
 
-  Lemma TEMP p :
-    (forall x y : nat, definite (p x y)) -> forall b, definite (exists x y, x < b /\ y < b /\ p x y).
+  Lemma LINE p : 
+    (forall x y : nat, definite (p x y)) -> forall b y, definite (exists x, x < b /\ p x y).
   Proof.
-    intros Hp b.
-    induction b.
-    - right. intros [ ? []]. lia.
-    - destruct IHb as [(x & y & ?)|h].
-      + left. exists x, y. repeat split; try lia; try tauto.
-      + destruct (Hp b b).
-        * left. exists b, b. repeat split; try lia; try tauto.
-        * assert (forall x y, x < S y <-> x = y \/ x < y) as L by lia.
-          right; intros ( x & y & [->|]%L & [->|]%L & ?).
-          ** auto.
-          ** apply h. exists b, y.
-             repeat split; try lia; try tauto.
+    intros def b. induction b; intros y.
+    - right. intros [? []]. admit.
+    - destruct (IHb y) as [[x ]|h].
+      + left; exists x. split; [lia| tauto].
+      + destruct (def b y).
+        * left. exists b. split; [lia| tauto].
+        * right.
+          assert (forall x y, x < S y <-> x = y \/ x < y) as L by lia.
+          intros [x [[-> |]%L ?]].
+          ** tauto.
+          ** apply h. now exists x.
   Admitted.
 
+  Lemma SQUARE p :
+    (forall x1 x2 y : nat, definite (p x1 x2 y)) -> forall b y, definite (exists x1 x2, x1 < b /\ x2 < b /\ p x1 x2 y).
+  Proof.
+    intros Hp b y.
+    enough (forall x1 y, definite (exists x2, x2 < b /\ p x1 x2 y)) as A.
+    destruct (LINE _ A b y) as [[x1 [? [x2 ] ]]| nh].
+    - left. exists x1, x2. repeat split; tauto.
+    - right. intros h. apply nh.
+      destruct h as (x1 & x2 & H).
+      exists x1. split; [tauto|]. 
+      exists x2; tauto.
+    - intros x1 z. apply LINE. intros. apply Hp. 
+  Qed.
+
+
+  Lemma LEM_bounded_exist_ternary' phi : 
+    (⊨ ∀∀∀ phi ∨ ¬ phi) -> bounded 3 phi -> ⊨ ∀∀∀ (∃ $0 ⧀ $3 ∧ phi) ∨ ¬ (∃ $0 ⧀ $3 ∧ phi).
+  Proof.
+  Admitted.
+
+
+  (* LINE = LEM_bounded_exist_sat *)
 
   Lemma LEM_bounded_exist_ternary {phi} sigma : 
     delta0 phi -> bounded 3 phi -> forall b x, (x .: b .: sigma) ⊨ (∃∃ $0 ⧀ $3 ∧ $1 ⧀ $3 ∧ phi) \/ ~ (x .: b .: sigma) ⊨ (∃∃ $0 ⧀ $3 ∧ $1 ⧀ $3 ∧ phi).
   Proof.
-    intros delta0_phi ternary_phi ρ N.
-    pose (Phi := ∀ (∃∃ $0 ⧀ $3 ∧ $1 ⧀ $3 ∧ phi) ∨ ¬ (∃∃ $0 ⧀ $3 ∧ $1 ⧀ $3 ∧ phi)).
-    assert (H : forall d rho, (d.:rho) ⊨ Phi).
-    apply induction. apply axioms.
-    repeat solve_bounds.
-    eapply bounded_up. apply ternary_phi. lia.
-    eapply bounded_up. apply ternary_phi. lia.
-    - intros rho y. cbn. right.
-      now intros (? & ? & [?%nolessthen_zero ] & ?).
-    - intros n IHN rho y. cbn.
-      destruct (IHN rho y) as [IH|IH]; fold sat in *; cbn in IH.
-      + left. destruct IH as (d0 & d1 & Hd). exists d0, d1. repeat split.
-        ++  destruct Hd as [[[k ->] _] _].
-            exists (iσ k). now rewrite add_rec_r.
-        ++  destruct Hd as [[_ [k ->]] _].
-            exists (iσ k). now rewrite add_rec_r.
-        ++  eapply bound_ext. apply ternary_phi.
-            2 : apply Hd.
-            intros [|[|[]]]; solve_bounds.
-      + specialize (LEM_ternary phi delta0_phi ternary_phi) as lem_phi.
-        destruct (lem_phi (fun _ => i0) y n n) as [HN|HN]; fold sat in *.
-        ++  left. exists n, n. repeat split.
-            exists i0. now rewrite add_zero_r.
-            exists i0. now rewrite add_zero_r.
-            eapply bound_ext. apply ternary_phi.
-            2 : apply HN.
-            intros [|[|[]]]; solve_bounds.
-        ++  right. intros H. apply IH.
-            destruct H as (x0 & x1 & [Hx1%lt_S Hx0%lt_S] & Hx); auto.
-            exists x1, x0. repeat split.
-            destruct Hx0 as [| ->]; auto.
-            exfalso. apply HN.
-            eapply bound_ext. apply binary_phi.
-            2 : apply Hx2.
-            intros [|[]]; solve_bounds.
-            eapply bound_ext. apply binary_phi.
-            2 : apply Hx2.
-            intros [|[]]; solve_bounds.
-            apply axioms.
-      - intros y. specialize (H N (fun _ => N) y).
-        fold sat in H; cbn in *. 
-        destruct H as [h|h].
-        left. destruct h as [d Hd]. 
-        exists d. split. apply Hd.
-        eapply bound_ext. apply binary_phi.
-        2 : apply Hd.
-        intros [|[]]; solve_bounds.
-        right. intros h1. apply h.
-        destruct h1 as [d Hd]. 
-        exists d. split. apply Hd.
-        eapply bound_ext. apply binary_phi.
-        2 : apply Hd.
-        intros [|[]]; solve_bounds.
+    intros d0 b3 b y.
+    unshelve refine (let D' := LEM_bounded_exist_ternary' (∃ $0 ⧀ $3 ∧ phi) _ _ in _); auto.
+    - apply LEM_bounded_exist_ternary'; auto. 
+      intros rho x1 x2 x3.
+      specialize (d0 var).
+      cbn. 
+      admit.
+    - repeat solve_bounds. eapply bounded_up; eauto.
+    - specialize (D' sigma b b y); fold sat in *.
+      destruct D' as [H|nH].
+    + left. cbn in H. destruct H as [x1 [H1 [x2 [H2 H]]]].
+      exists x1, x2. cbn. repeat split; try tauto.
+      eapply bound_ext. 3 : apply H. eauto.
+      intros [|[|[]]]; solve_bounds.
+    + right; cbn. intros (x1 & x2 & H). apply nH; fold sat; cbn.
+      exists x1. split; try tauto.
+      exists x2. split; try tauto.
+      eapply bound_ext. 3 : apply H. eauto.
+      intros [|[|[]]]; solve_bounds.
+
+    Restart.
+    intros d0 b3 b y.
+    unshelve refine (let D := LEM_bounded_exist_sat _ _ axioms ψ Hψ (∃ $0 ⧀ $3 ∧ phi) _ _ in _).
+    - admit.
+    - do 2 constructor; auto. admit.
+    - specialize (D0 sigma b y); fold sat in *.
+      destruct D0 as [H|nH].
+      + left. cbn in H. destruct H as [x1 [H1 [x2 [H2 H]]]].
+        exists x1, x2. cbn. repeat split; tauto.
+      + right; cbn. intros (x1 & x2 & H). apply nH; fold sat; cbn.
+        exists x1. split; [tauto|].
+        exists x2; tauto.
   Admitted.
 
 

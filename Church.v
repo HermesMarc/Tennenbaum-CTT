@@ -33,7 +33,7 @@ Definition WRT_strong := forall p : nat -> Prop, Dec p ->  ~ ~ exists ϕ, bounde
 Definition weak_repr ϕ (p : nat -> Prop) := (forall x, p x <-> Q ⊢I ϕ[(num x)..]).
 Definition RT_weak := forall p : nat -> Prop, enumerable p -> exists ϕ, bounded 3 ϕ /\ inhabited(delta0 ϕ) /\ weak_repr (∃∃ ϕ) p.
 Definition WRT_weak := forall p : nat -> Prop, enumerable p -> ~ ~ exists ϕ, bounded 3 ϕ /\ inhabited(delta0 ϕ) /\ weak_repr (∃∃ ϕ) p.
-Definition RT_weak2 := forall p : nat -> Prop, enumerable p -> exists ϕ, bounded 3 ϕ /\ inhabited(delta0 ϕ) /\ weak_repr (∃∃ ϕ) p.
+
 
 Definition RT := RT_strong /\ RT_weak.
 
@@ -115,7 +115,7 @@ Qed.
 
 
 Lemma CT_RTw :
-  CT_Q -> RT_weak2.
+  CT_Q -> RT_weak.
 Proof.
   intros ct p [f Hf]%enumerable_nat.
   destruct (ct f) as [ϕ [b2 [[s1] H]]].

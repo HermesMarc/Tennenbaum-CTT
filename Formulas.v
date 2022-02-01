@@ -37,11 +37,7 @@ Section Delta0.
 
   (** Define Δ0 and Σ1 formulas *)
 
-  Inductive delta0 : form -> Type :=
-  | Delta_fal :  delta0 ⊥
-  | Delta_eq : forall t s,  delta0 (t == s)
-  | Delta_Conj : forall α β b,  delta0 α -> delta0 β ->  delta0 (bin b α β).
-
+  Definition delta0 ϕ := forall s, bounded 0 (ϕ[s]) -> {Q ⊢I ϕ[s]} + {Q ⊢I ¬ ϕ[s]}.
 
     Ltac invert_delta1 :=
     match goal with
@@ -62,19 +58,12 @@ Section Delta0.
     all: now invert_bounds.
   Qed.
 
-  Lemma inversion_delta0_bin α β b : delta0 (bin b α β) -> delta0 α * delta0 β.
-  Proof.
-    intros H. destruct b.
-    all: now invert_delta.
-  Qed.
-
-
   (* Formulas stay at their level of the hierarchy under substitions. *)
   
   Fact subst_delta0 {ff : falsity_flag} phi sigma : 
     delta0 phi -> delta0 phi[sigma].
   Proof.
-    induction 1; now constructor.
+    intros H s. rewrite subst_comp. apply H.
   Qed.
 
 
@@ -166,13 +155,12 @@ Proof.
 Qed.
 
 
-Definition Q_dec ϕ := {Q ⊢I ϕ} + {Q ⊢I ¬ ϕ}.
 
-Lemma Q_neg_equiv ϕ : 
-  Q_dec ϕ -> (~ Q ⊢I ϕ) <-> Q ⊢I ¬ ϕ.
+Lemma Q_neg_equiv ϕ s : 
+  delta0 ϕ -> bounded 0 ϕ[s] -> (~ Q ⊢I ϕ[s]) <-> Q ⊢I ¬ ϕ[s].
 Proof.
   intros dec. split.
-    - intros. now destruct dec.
+    - intros. destruct (dec s); tauto.
     - intros H1 H2.
       apply PA_consistent.
       exists Q. split. intros.
@@ -197,51 +185,19 @@ Section Closed.
 
 
   Theorem Q_dec_closed_delta0 :
-    Q_dec phi.
+    {Q ⊢I phi} + {Q ⊢I ¬ phi}.
   Proof.
-    induction H0.
-    - cbn -[Q]. right.
-      apply II, Ctx. firstorder.
-    - apply term_eq_dec; now inversion Hcl. 
-    - apply inversion_bounded_bin in Hcl.
-      apply inversion_delta0_bin in H0.
-      specialize (IHd1 (proj1 Hcl) (fst H0)).
-      specialize (IHd2 (proj2 Hcl) (snd H0)).
-      destruct b.
-      + destruct IHd1 as [Hf1 | Hf1], IHd2 as [Hf2 | Hf2].
-        left. now apply CI.
-        all: right; apply II.
-        eapply IE. apply Weak with Q. apply Hf2. shelve.
-        eapply CE2, Ctx. firstorder.
-        eapply IE. apply Weak with Q. apply Hf1. shelve.
-        eapply CE1, Ctx. firstorder.
-        eapply IE. apply Weak with Q. apply Hf2. shelve.
-        eapply CE2, Ctx. firstorder.
-        Unshelve. all: apply Faster1.
-      + destruct IHd1 as [Hf1 | Hf1], IHd2 as [Hf2 | Hf2].
-        all: try (left; now (apply DI1 + apply DI2)).
-        right. apply II. eapply DE.
-        apply Ctx; firstorder.
-        eapply IE. apply Weak with Q. apply Hf1. apply Faster2.
-        apply Ctx; firstorder.
-        eapply IE. apply Weak with Q. apply Hf2. apply Faster2.
-        apply Ctx; firstorder.
-      + destruct IHd1 as [Hf1 | Hf1], IHd2 as [Hf2 | Hf2].
-        left. apply II. apply Weak with Q. apply Hf2. apply Faster1.
-        right. apply II. eapply IE.
-        apply Weak with Q. apply Hf2. apply Faster1.
-        eapply IE. apply Ctx. firstorder.
-        apply Weak with Q. apply Hf1. apply Faster1.
-        left. now apply imps, Exp, imps.
-        left. now apply imps, Exp, imps.
+    setoid_rewrite <-subst_var. cbn -[Q].
+    apply H0. now rewrite subst_var.
   Qed.
 
 
-
-
-  Corollary Q_neg_equiv_delta0 : (~ Q ⊢I phi) <-> Q ⊢I ¬ phi.
+  Corollary Q_neg_equiv_delta0 : 
+    (~ Q ⊢I phi) <-> Q ⊢I ¬ phi.
   Proof.
-    apply Q_neg_equiv, Q_dec_closed_delta0.
+    setoid_rewrite <-subst_var. cbn -[Q].
+    apply Q_neg_equiv; auto.
+    now rewrite subst_var.
   Qed.
 
 

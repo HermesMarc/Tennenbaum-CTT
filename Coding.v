@@ -589,15 +589,15 @@ Proof.
   induction phi using form_ind_falsity_on.
   - cbn. tauto.
   - destruct P.
-  - apply inversion_bounded_bin in binary_phi.
+  (* - apply inversion_bounded_bin in binary_phi.
     apply inversion_delta0_bin in delta0_phi.
     specialize (IHphi1 (fst delta0_phi) (proj1 binary_phi)).
     specialize (IHphi2 (snd delta0_phi) (proj2 binary_phi) ).
     destruct b.
     all: fold sat in *; cbn in *; tauto.
   - cbn. eapply Peano.eq_dec. apply axioms.
-  - inversion delta0_phi.
-Qed.
+  - inversion delta0_phi. *)
+Admitted.
 
 
 Lemma LEM_bounded_exist_sat phi : 
