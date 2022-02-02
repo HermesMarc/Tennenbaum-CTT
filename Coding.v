@@ -597,13 +597,13 @@ Proof.
     all: fold sat in *; cbn in *; tauto.
   - cbn. eapply Peano.eq_dec. apply axioms.
   - inversion delta0_phi. *)
-Admitted.
+Abort.
 
 
 Lemma LEM_bounded_exist_sat phi : 
   delta0 phi -> binary phi -> ⊨ ∀∀ (∃ $0 ⧀ $2 ∧ phi) ∨ ¬ (∃ $0 ⧀ $2 ∧ phi).
 Proof.
-  intros delta0_phi binary_phi ρ N.
+  (* intros delta0_phi binary_phi ρ N.
   pose (Phi := ∀ (∃ $0 ⧀ $2 ∧ phi) ∨ ¬ (∃ $0 ⧀ $2 ∧ phi)).
   assert (H : forall d rho, (d.:rho) ⊨ Phi).
   apply induction. apply axioms.
@@ -652,13 +652,13 @@ Proof.
       exists d. split. apply Hd.
       eapply bound_ext. apply binary_phi.
       2 : apply Hd.
-      intros [|[]]; solve_bounds.
-Qed.
+      intros [|[]]; solve_bounds. *)
+Abort.
 
 Corollary LEM_bounded_exist {phi} sigma : 
   delta0 phi -> binary phi -> forall b x, (x .: b .: sigma) ⊨ (∃ $0 ⧀ $2 ∧ phi) \/ ~ (x .: b .: sigma) ⊨ (∃ $0 ⧀ $2 ∧ phi).
 Proof.
-  intros delta0_phi binary_phi b y.
+  (* intros delta0_phi binary_phi b y.
   specialize (LEM_bounded_exist_sat _ delta0_phi binary_phi) as Hb.
   destruct (Hb (fun _ => b) b y) as [h|h]; fold sat in *; cbn in h.
   left. destruct h as [d Hd].
@@ -669,8 +669,8 @@ Proof.
   destruct h1 as [d Hd].
   exists d. split. apply Hd.
   eapply bound_ext. apply binary_phi. 2 : apply Hd.
-  intros [|[]]; solve_bounds.
-Qed.
+  intros [|[]]; solve_bounds. *)
+Abort.
 
 
 End Coding.

@@ -1,4 +1,4 @@
-Require Import FOL Peano Tarski Deduction NumberTheory Synthetic DecidabilityFacts Tennenbaum_diagonal Tennenbaum_insep Makholm McCarty Church Coding.
+Require Import FOL Peano Tarski Deduction NumberTheory Synthetic DecidabilityFacts Formulas Tennenbaum_diagonal Tennenbaum_insep Makholm McCarty Church Coding.
 
 
 Notation "⊨ phi" := (forall rho, rho ⊨ phi) (at level 21).
@@ -12,6 +12,8 @@ Variable D : Type.
 Variable I : interp D.
 Variable axioms : forall ax, PA ax -> ⊨ ax.
 Variable ct : CT_Q.
+
+Hypothesis delta0_definite : forall phi, delta0 phi -> Q ⊢I phi ∨ ¬ phi.
 
 Definition div e d := exists k : D, e i⊗ k = d.
 Definition div_num n (d : D) := exists e, inu n i⊗ e = d.
