@@ -162,9 +162,9 @@ Section Model.
   Qed.
 
   Lemma UC_Def_Dec X (p : X -> Prop) :
-    UC X bool -> Definite p -> Dec_sigT p.
+    UC X bool -> Definite p -> Dec p.
   Proof.
-    intros uc Def. apply Dec_sigT_decider.
+    intros uc Def. apply Dec_decider.
     refine (uc (fun x y => p x <-> y = true) _).
     intros n. destruct (Def n) as [h|h].
     - exists true; split; [tauto|]. 
@@ -179,22 +179,12 @@ Section Model.
   Definition div_num n (d : D) := exists e, inu n i⊗ e = d.
   Definition Div_nat (d : D) := fun n => div_num n d.
 
-
-  Fact DN_chaining_T {A B : Type} :
-    ((A -> False) -> False) -> (((A -> B) -> False) -> False) -> (B -> False) -> False.
-  Proof. tauto. Qed.
-
-  Fact DN_T {A : Type} :
-    A -> (A -> False) -> False.
-  Proof. tauto. Qed.
-
   Lemma DN_Div_nat :
     UC nat bool -> nonStd D -> forall d, ~~Dec (Div_nat d).
   Proof.
     intros uc [e He] d.
-    apply DN_Dec_equiv.
-    refine (DN_chaining_T _ _).
-    2 : { now apply DN_T, UC_Def_Dec. }
+    refine (DN_chaining _ _).
+    2 : { now apply DN, UC_Def_Dec. }
     refine (DN_chaining (bounded_definite_binary (∃ $1 ⊗ $0 == $2) _ (iσ (d i⊕ e))) _).
     { repeat solve_bounds. }
     apply DN. intros H n.

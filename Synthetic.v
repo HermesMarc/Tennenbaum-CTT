@@ -15,7 +15,7 @@ Definition stable P := ~~P -> P.
 Definition Stable {X} p := forall x : X, stable (p x).
 Definition DNE := forall P, stable P.
 Definition MP := forall (f : nat -> nat), stable (exists n, f n = 0).
-Definition UC X Y := forall R, (forall x:X, exists! y:Y, R x y) -> { f & forall x, R x (f x)}.
+Definition UC X Y := forall R, (forall x:X, exists! y:Y, R x y) -> exists f, forall x, R x (f x).
 
 Fact LEM_DNE :
   (LEM <-> DNE) /\ (DNE -> MP).

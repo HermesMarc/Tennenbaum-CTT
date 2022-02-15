@@ -56,8 +56,21 @@ Notation "x '⊕' y" := (func Plus ([x ; y]) ) (at level 39) : PA_Notation.
 Notation "x '⊗' y" := (func Mult ([x ; y]) ) (at level 38) : PA_Notation.
 Notation "x '==' y" := (eq x y) (at level 40) : PA_Notation.
 (* Definition syntac_less (x y : term) := (∃ y[↑] == σ (x[↑] ⊕ $0)) : PA_Notation. *)
-Notation "x '⧀' y" := (∃ y`[↑] == σ (x`[↑] ⊕ $0)) (at level 40) : PA_Notation.
+Definition sless x y := (∃ y`[↑] == σ (x`[↑] ⊕ $0)). 
+Notation "x '⧀' y" := (sless x y)  (at level 40) : PA_Notation.
 
+
+Fact unfold_sless x y :
+  sless x y = ∃ y`[↑] == σ (x`[↑] ⊕ $0).
+Proof.
+reflexivity.
+Qed.
+
+Fact sless_subst x y s :
+  (sless x y)[s] = sless (x`[s]) (y`[s]).
+Proof.
+cbn. now rewrite !up_term.
+Qed.
 
 
 (* Defines numerals i.e. a corresponding term for every natural number *)
@@ -111,6 +124,13 @@ Definition EQ :=
 
 (** ** Robinson Arithmetic *)
 Definition Q := (EQ ++ ax_zero_succ :: ax_succ_inj :: ax_add_zero :: ax_add_rec :: ax_mult_zero :: ax_mult_rec :: ax_zero_or_succ :: nil)%list.
+
+Fact unfold_Q :
+  Q = (EQ ++ ax_zero_succ :: ax_succ_inj :: ax_add_zero :: ax_add_rec :: ax_mult_zero :: ax_mult_rec :: ax_zero_or_succ :: nil)%list.
+Proof. reflexivity. Qed.
+
+Global Opaque Q.
+
 
 
 (** ** The Theory PA *)
@@ -640,7 +660,7 @@ Section Models.
           + now intros ?%nolessthen_zero.
         - pose (phi := ∀∃∃ $3 == $1 ⊗ (σ $2) ⊕ $0 ∧ (zero ⧀ (σ $2) --> $0 ⧀ (σ $2) ) ).
           assert (forall n rho, (n.:rho) ⊨ phi).
-          apply induction. cbn. cbn in *. repeat solve_bounds.
+          apply induction. unfold sless in *. cbn. cbn in *. repeat solve_bounds.
           + intros rho d. cbn. exists i0, i0. fold i0. split.
             * now rewrite mult_zero, add_zero.
             * tauto.
@@ -1120,6 +1140,13 @@ Section Q_prv.
 
   Lemma better_leibniz sigma phi rho A : (forall n, A ⊢ (sigma n == rho n)) -> A ⊢ phi[sigma] -> A ⊢ phi[rho].
   Proof.
+    induction phi.
+    - now cbn.
+    - destruct P.
+    - destruct b0; intros Eq H; cbn in *.
+      + apply CI; eauto.
+      + eapply DE; [apply H|apply DI1|apply DI2].
+        * eapply IHphi1; auto.
   Abort.
 
 
@@ -1313,7 +1340,7 @@ Section Q_prv.
   Proof.
     apply AllI, II. eapply ExE.
     - apply Ctx. now left.
-    - cbn -[Q]. eapply IE.
+    - cbn. eapply IE.
       + pose (s := $1 ⊕ $0).
         apply Zero_succ with (x := s).
         right; now right.
@@ -1330,7 +1357,7 @@ Section Q_prv.
   Lemma Faster3 :
     forall A, Q <<= A ++ map (subst_form ↑) Q.
   Proof.
-    intros A; induction A; cbn -[Q].
+    intros A; induction A; cbn.
     - firstorder.
     - right. now apply IHA.
   Qed.
@@ -1350,7 +1377,7 @@ Section Q_prv.
         eapply ExE.
         * apply Ctx. now left.
         * apply ExI with (t := $0).
-          cbn -[Q]. rewrite !num_subst.
+          cbn. rewrite !num_subst.
           eapply transitivity. right; now right.
           2 : {apply Add_rec. right; now right. }
           apply Succ_inj. right; now right.

@@ -1,4 +1,4 @@
-Require Import FOL Peano Tarski Deduction CantorPairing Synthetic DecidabilityFacts NumberTheory.
+Require Import FOL Peano Tarski Deduction CantorPairing Synthetic DecidabilityFacts NumberTheory Peano.
 Require Import Lia.
 Require Import Equations.Equations Equations.Prop.DepElim.
 
@@ -67,63 +67,63 @@ Section Delta0.
   Qed.
 
 
-  (* Numerals are closed terms. *)
-
-  Lemma closed_num n k : bounded_t k (num n).
-  Proof.
-    eapply bounded_up_t. instantiate (1 := 0).
-    induction n; cbn; now solve_bounds. lia.
-  Qed.
-
-
-  Lemma vec_map_preimage {X N} (v : Vector.t term N) f (x : X) :
-    Vector.In x (Vector.map f v) -> exists t, Vector.In t v /\ x = f t.
-  Proof.
-    induction v; cbn; intros H.
-    - inversion H.
-    - inversion H.
-      exists h. split. constructor. reflexivity.
-      apply Eqdep_dec.inj_pair2_eq_dec in H3. subst.
-      destruct (IHv H2) as [t Ht].
-      exists t. split. constructor. all: try apply Ht.
-      decide equality.
-  Qed.
-
-
-  Lemma subst_bound_t t N B sigma :
-    bounded_t N t -> (forall n, n < N -> bounded_t B (sigma n) ) -> bounded_t B (t`[sigma]).
-  Proof.
-    induction 1 as [| f v H IH]; intros HN; cbn.
-    - now apply HN. 
-    - constructor. intros s (t & Ht & ->)%vec_map_preimage.
-      now apply IH.
-  Qed.
-
-  Lemma subst_bound phi :
-    forall sigma N B, bounded N phi -> (forall n, n < N -> bounded_t B (sigma n) ) -> bounded B phi[sigma].
-  Proof.
-    induction phi using form_ind_falsity_on; cbn.
-    all: intros sigma N B HN HB.
-    - solve_bounds.
-    - constructor. intros v Hv. depelim Hv.
-    - apply inversion_bounded_bin in HN. destruct HN.
-      constructor.
-      + eapply IHphi1; eauto.
-      + eapply IHphi2; eauto.
-    - constructor; eapply subst_bound_t with (N := N); auto.
-      all: now inversion HN.
-    - constructor. apply IHphi with (N:= S N).
-      + now invert_bounds.
-      + intros [|n] hn.
-        * constructor. lia.
-        * eapply subst_bound_t.
-          ** apply HB. lia.
-          ** intros ??. constructor. lia.
-  Qed.
-
 End Delta0.
 
 
+
+(* Numerals are closed terms. *)
+
+Lemma closed_num n k : bounded_t k (num n).
+Proof.
+  eapply bounded_up_t. instantiate (1 := 0).
+  induction n; cbn; now solve_bounds. lia.
+Qed.
+
+
+Lemma vec_map_preimage {X N} (v : Vector.t term N) f (x : X) :
+  Vector.In x (Vector.map f v) -> exists t, Vector.In t v /\ x = f t.
+Proof.
+  induction v; cbn; intros H.
+  - inversion H.
+  - inversion H.
+    exists h. split. constructor. reflexivity.
+    apply Eqdep_dec.inj_pair2_eq_dec in H3. subst.
+    destruct (IHv H2) as [t Ht].
+    exists t. split. constructor. all: try apply Ht.
+    decide equality.
+Qed.
+
+
+Lemma subst_bound_t t N B sigma :
+  bounded_t N t -> (forall n, n < N -> bounded_t B (sigma n) ) -> bounded_t B (t`[sigma]).
+Proof.
+  induction 1 as [| f v H IH]; intros HN; cbn.
+  - now apply HN. 
+  - constructor. intros s (t & Ht & ->)%vec_map_preimage.
+    now apply IH.
+Qed.
+
+Lemma subst_bound phi :
+  forall sigma N B, bounded N phi -> (forall n, n < N -> bounded_t B (sigma n) ) -> bounded B phi[sigma].
+Proof.
+  induction phi using form_ind_falsity_on; cbn.
+  all: intros sigma N B HN HB.
+  - solve_bounds.
+  - constructor. intros v Hv. depelim Hv.
+  - apply inversion_bounded_bin in HN. destruct HN.
+    constructor.
+    + eapply IHphi1; eauto.
+    + eapply IHphi2; eauto.
+  - constructor; eapply subst_bound_t with (N := N); auto.
+    all: now inversion HN.
+  - constructor. apply IHphi with (N:= S N).
+    + now invert_bounds.
+    + intros [|n] hn.
+      * constructor. lia.
+      * eapply subst_bound_t.
+        ** apply HB. lia.
+        ** intros ??. constructor. lia.
+Qed.
 
 
 (* PA and Q are consistent in Coq. *)
@@ -187,7 +187,7 @@ Section Closed.
   Theorem Q_dec_closed_delta0 :
     {Q ⊢I phi} + {Q ⊢I ¬ phi}.
   Proof.
-    setoid_rewrite <-subst_var. cbn -[Q].
+    setoid_rewrite <-subst_var. cbn.
     apply H0. now rewrite subst_var.
   Qed.
 
@@ -195,7 +195,7 @@ Section Closed.
   Corollary Q_neg_equiv_delta0 : 
     (~ Q ⊢I phi) <-> Q ⊢I ¬ phi.
   Proof.
-    setoid_rewrite <-subst_var. cbn -[Q].
+    setoid_rewrite <-subst_var. cbn.
     apply Q_neg_equiv; auto.
     now rewrite subst_var.
   Qed.
@@ -314,7 +314,7 @@ Section Sigma1.
     N⊨ (∃ α)[(num n)..] -> Q ⊢I (∃ α)[(num n)..].
   Proof.
     intros [m Hm]%Σ1_complete'.
-    cbn -[Q].
+    cbn.
     change (∃ α[up (num n)..]) with (Peano.exist_times 1 (α[up (num n)..])).
     eapply subst_exist_prv; eauto.
     eapply subst_bound; eauto.
@@ -364,7 +364,7 @@ Section Sigma1.
     N⊨ (∃∃α)[(num n)..] -> Q ⊢I (∃∃α)[(num n)..].
   Proof.
     intros (a & b & Hab)%Σ1_ternary_complete'.
-    cbn -[Q].
+    cbn.
     change (∃∃ α[up (up (num n)..)]) with (Peano.exist_times 2 (α[up (up (num n)..)])).
     rewrite subst_comp in Hab.
     eapply subst_exist_prv; eauto. 

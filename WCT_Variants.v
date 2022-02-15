@@ -11,7 +11,7 @@ Instance ff : falsity_flag := falsity_on.
 Variable D : Type.
 Variable I : interp D.
 Variable axioms : forall ax, PA ax -> ⊨ ax.
-Variable ct : CT_Q.
+Variable wct : WCT_Q.
 
 Hypothesis delta0_definite : forall phi, delta0 phi -> Q ⊢I phi ∨ ¬ phi.
 
@@ -22,9 +22,10 @@ Definition div_pi ψ n a :=  (inu n .: (fun _ => a)) ⊨ (∃ (ψ ∧ ∃ $1 ⊗
 Definition prime_form ψ := bounded 2 ψ /\ (forall x, Q ⊢I ∀ ψ[up (num x)..] <--> $0 == num (Irred x) ).
 
 Lemma Irred_repr :
-  exists ψ, prime_form ψ.
+  ~~ exists ψ, prime_form ψ.
 Proof.
-  destruct (ct Irred) as [phi Hphi].
+  apply (DN_chaining (wct Irred)), DN.
+  intros [phi Hphi].
   exists (∃ phi). split.
   - now constructor.
   - apply Hphi.
@@ -55,10 +56,11 @@ Proof.
 Qed.
 
 Lemma Dec_Div_nat_std :
-  forall e, std e -> Dec (Div_nat e).
+  forall e, std e -> ~~ Dec (Div_nat e).
 Proof.
   intros e [n <-].
-  destruct Irred_repr as [ψ ]; auto.
+  apply (DN_chaining (Irred_repr)), DN.
+  intros [ψ ].
   constructor; intros x.
   destruct n.
   - left. exists (inu 0).
@@ -100,15 +102,16 @@ Qed.
 Theorem Tennenbaum1 :
   MP -> Discrete D -> Enumerable D <-> forall e, std e.
 Proof.
-  intros mp eq. 
-  destruct Irred_repr as [ψ ]; auto.
-  apply CT_RTs in ct.
+  intros mp eq.
   split.
   - intros ?.
-    assert (~ exists e, ~ std e) as He.
-    { eapply Tennenbaum_diagonal with (ψ:=ψ); eauto. }
-    intros e. apply MP_Discrete_stable_std; auto.
-    intros nH. apply He. now exists e.
+  assert (~ exists e, ~ std e) as He.
+  apply (DN_remove (Irred_repr)).
+  intros [ψ ].
+  { eapply Tennenbaum_diagonal' with (ψ:=ψ); eauto.
+    now apply WCT_WRTs. }
+  intros e. apply MP_Discrete_stable_std; auto.
+  intros nH. apply He. now exists e.
   - intros ?. now apply Std_is_Enumerable.
 Qed.
 
@@ -120,10 +123,12 @@ Section Enum.
   Corollary Tennenbaum_insep :
     MP -> Discrete D -> (forall d, ~~Dec (Div_nat d)) -> (forall e, ~~std e).
   Proof.
-    intros mp eq DecDiv e He.
-    destruct Irred_repr as [ψ ]; auto.
+    intros mp eq DecDiv e.
+    apply (DN_remove (Irred_repr)).
+    intros [ψ ].
+    refine (DN_remove (WCT_Inseparable _ _ wct) _); auto.
+    intros ? He.
     eapply nonDecDiv; eauto.
-    - now apply CT_Inseparable.
     - now apply MP_Discrete_stable_std.
     - now exists e.
     - intros [d Hd]. apply (DecDiv d).
@@ -137,7 +142,7 @@ Section Enum.
     intros mp eq. split.
     - intros ??. apply MP_Discrete_stable_std; auto.
       eapply Tennenbaum_insep; eauto.
-    - intros ??. now apply DN, Dec_Div_nat_std.
+    - intros ??. now apply Dec_Div_nat_std.
   Qed.
 
 End Enum.

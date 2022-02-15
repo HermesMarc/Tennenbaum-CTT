@@ -94,7 +94,46 @@ Section Model.
     - setoid_rewrite <-Hα.
       setoid_rewrite <-Hβ.
       apply H.
-  Qed.  
+  Qed.
+
+
+  Lemma WInsep_ :
+    WRT_strong -> Insep'.
+  Proof.
+    intros wrt.
+    exists A, B. repeat split; auto.
+    1,2 : apply enumerable_Q_prv.
+    { apply Disjoint_AB. }
+    intros G Dec_G.
+    intros H.
+    apply (DN_remove (wrt G Dec_G)).
+    intros [γ [? [? []]]].
+    destruct (surj_form (∃ γ)) as [c Hc].
+    rewrite <-Hc in *.
+    unfold A, B in *; fold Φ in *.
+    intros ?%(fun h => h c).
+    enough (~ G c); auto.
+  Qed.
+
+
+  Lemma WCT_Inseparable :
+    WCT_Q -> ~~ Insep.
+  Proof.
+    intros wct.
+    destruct (WInsep_ (WCT_WRTs wct)) as (A & B & HA & HB & disj & H).
+    apply (DN_chaining ((WCT_WRTw wct) B HB)), (DN_chaining ((WCT_WRTw wct) A HA)), DN.
+    intros [α (Ha0 & [Ha1] & Hα)] [β (Hb0 & [Hb1] & Hβ)].
+    exists α, β. repeat split; auto; unfold weak_repr in *.
+    - intros n h%soundness. apply (disj n).
+      rewrite Hα, Hβ.
+      split; apply Σ1_ternary_complete; auto.
+      all: intros rho; specialize (h _ interp_nat rho);
+            apply h; apply Q_std_axioms.
+    - setoid_rewrite <-Hα.
+      setoid_rewrite <-Hβ.
+      apply H.
+  Qed.
+
 
   
   Lemma delta0_ternary_definite phi :

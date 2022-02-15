@@ -442,6 +442,7 @@ Section notStd.
     { eapply bounded_subst. apply unary_alpha.
     intros []; try now intros. lia. }
     setoid_rewrite <-E. rewrite !subst_var.
+    rewrite unfold_sless, !num_subst in *.
     apply H.
     apply Overspill_DN in H'; auto.
     2 : { repeat solve_bounds.
@@ -491,7 +492,8 @@ Section notStd.
     eapply bounded_subst. apply binary_alpha.
     intros [|[]]; cbn; try reflexivity; lia.
     setoid_rewrite <-E. rewrite !subst_var.
-    specialize (H n). rewrite num_subst in H.
+    specialize (H n). 
+    rewrite unfold_sless, !num_subst in H.
     apply H.
     apply Overspill_DN in H'; auto.
     2 : { solve_bounds.
@@ -543,7 +545,8 @@ Section notStd.
     eapply bounded_subst. apply binary_alpha.
     intros [|[]]; cbn; try reflexivity; lia.
     setoid_rewrite <-E. rewrite !subst_var.
-    specialize (H n). rewrite num_subst in H.
+    specialize (H n). 
+    rewrite unfold_sless, num_subst in H.
     apply H.
     apply Overspill_DN in H'; auto.
     2 : { repeat solve_bounds.
