@@ -286,6 +286,8 @@ Section Closed.
 End Closed.
 
 
+
+
 Notation "N⊨ phi" := (forall rho, @sat _ _ nat interp_nat _ rho phi) (at level 40).
 
 Section Sigma1.

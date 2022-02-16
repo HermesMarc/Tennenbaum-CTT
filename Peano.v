@@ -1028,7 +1028,8 @@ Section Q_prv.
   Qed.
 
 
-  Lemma Zero_succ x : Gamma ⊢ ¬ zero == σ x.
+  Lemma Zero_succ x : 
+    Gamma ⊢ ¬ zero == σ x.
   Proof.
     apply Weak with Q.
     pose (sigma := [x] ∗ var).
@@ -1041,7 +1042,8 @@ Section Q_prv.
   Qed.
 
 
-  Lemma Succ_inj x y : Gamma ⊢ σ x == σ y -> Gamma ⊢ x == y.
+  Lemma Succ_inj x y : 
+    Gamma ⊢ σ x == σ y -> Gamma ⊢ x == y.
   Proof.
     intros H; eapply IE. 2: apply H.
     apply Weak with Q.
@@ -1056,7 +1058,8 @@ Section Q_prv.
 
 
 
-  Lemma Add_rec x y : Gamma ⊢ ( (σ x) ⊕ y == σ (x ⊕ y) ).
+  Lemma Add_rec x y : 
+    Gamma ⊢ ( (σ x) ⊕ y == σ (x ⊕ y) ).
   Proof.
     apply Weak with Q.
     pose (sigma := [y ; x] ∗ var).
@@ -1070,7 +1073,8 @@ Section Q_prv.
 
   (** * Homomorphism Properties of Numerals *)
 
-  Lemma num_add_homomorphism  x y : Gamma ⊢ ( num x ⊕ num y == num (x + y) ).
+  Lemma num_add_homomorphism  x y : 
+    Gamma ⊢ ( num x ⊕ num y == num (x + y) ).
   Proof.
     induction x; cbn.
     - pose (phi := zero ⊕ $0 == $0).
@@ -1084,7 +1088,8 @@ Section Q_prv.
   Qed.
 
 
-  Lemma Mult_rec x y : Gamma ⊢ ( (σ x) ⊗ y == y ⊕ (x ⊗ y) ).
+  Lemma Mult_rec x y : 
+    Gamma ⊢ ( (σ x) ⊗ y == y ⊕ (x ⊗ y) ).
   Proof.
     apply Weak with Q.
     pose (sigma := [x ; y] ∗ var).
@@ -1097,7 +1102,8 @@ Section Q_prv.
   Qed.
 
 
-  Lemma num_mult_homomorphism (x y : nat) : Gamma ⊢ ( num x ⊗ num y == num (x * y) ).
+  Lemma num_mult_homomorphism (x y : nat) : 
+    Gamma ⊢ ( num x ⊗ num y == num (x * y) ).
   Proof.
     induction x; cbn.
     - pose (phi := zero ⊗ $0 == zero).
@@ -1112,7 +1118,8 @@ Section Q_prv.
   Qed.
 
 
-  Lemma num_lt_prv x y : x < y <-> Gamma ⊢ (num x ⧀ num y).
+  Lemma num_lt_prv x y : 
+    x < y <-> Gamma ⊢ (num x ⧀ num y).
   Proof.
     split.
     - intros H.
@@ -1138,7 +1145,8 @@ Section Q_prv.
   Variable G : incl Q Gamma.
 
 
-  Lemma better_leibniz sigma phi rho A : (forall n, A ⊢ (sigma n == rho n)) -> A ⊢ phi[sigma] -> A ⊢ phi[rho].
+  Lemma better_leibniz sigma phi rho A : 
+    (forall n, A ⊢ (sigma n == rho n)) -> A ⊢ phi[sigma] -> A ⊢ phi[rho].
   Proof.
     induction phi.
     - now cbn.
@@ -1209,7 +1217,8 @@ Section Q_prv.
 
   (** * Closed terms are numerals. *)
 
-  Lemma closed_term_is_num s : bounded_t 0 s -> { n & Gamma ⊢ s == num n }.
+  Lemma closed_term_is_num s : 
+    bounded_t 0 s -> { n & Gamma ⊢ s == num n }.
   Proof.
     pattern s; revert s. apply term_rect.
     - intros ? H. exists 0. inversion H; lia.
@@ -1262,12 +1271,14 @@ Section Q_prv.
   Qed.
 
 
-  Fact num_eq x y : x = y -> Gamma ⊢ num x == num y.
+  Fact num_eq x y : 
+    x = y -> Gamma ⊢ num x == num y.
   Proof.
     intros ->. now apply reflexivity.
   Qed.
 
-  Lemma num_neq x : forall y, x <> y -> Gamma ⊢ ¬ num x == num y.
+  Lemma num_neq x : 
+    forall y, x <> y -> Gamma ⊢ ¬ num x == num y.
   Proof.
     induction x as [| x IHx].
     - intros [] neq.
@@ -1289,7 +1300,8 @@ Section Q_prv.
   Qed. 
 
 
-  Lemma num_eq_dec x y : { Gamma ⊢ num x == num y } + { Gamma ⊢ ¬ num x == num y }.
+  Lemma num_eq_dec x y : 
+    { Gamma ⊢ num x == num y } + { Gamma ⊢ ¬ num x == num y }.
   Proof.
     destruct (dec_eq_nat x y); [left|right].
     - now apply num_eq.
@@ -1383,7 +1395,8 @@ Section Q_prv.
           apply Succ_inj. right; now right.
           apply Ctx. now left.
   Qed. 
-
+  
+  
   Lemma num_lt_dec x y :
     { Gamma ⊢ num x ⧀ num y } + { Gamma ⊢ ¬ num x ⧀ num y }.
   Proof.
