@@ -12,6 +12,7 @@ FOL.v
 Deduction.v
 Tarski.v
 
+Dec.v
 ListEnumerabilityFacts.v
 Enumerability.v
 
