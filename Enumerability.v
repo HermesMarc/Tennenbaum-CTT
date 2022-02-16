@@ -19,6 +19,7 @@ Import ListAutomationNotations.
 
 Require Import FOL Peano Deduction DecidabilityFacts ListEnumerabilityFacts CantorPairing Tarski.
 Require Import Equations.Equations.
+Require Import EqdepFacts.
 
 Lemma in_filter_iff X x p (A : list X) :
   x el filter p A <-> x el A /\ p x = true.
@@ -229,12 +230,91 @@ Proof.
     intros phi. destruct (He phi) as [n Hn]. exists n. now rewrite Hn.
 Qed.
 
-Section Enumerability.
+Lemma dec_vec_in X n (v : vec X n) :
+  (forall x, vec_in x v -> forall y, Dec.dec (x = y)) -> forall v', Dec.dec (v = v').
+Proof with subst; try (now left + (right; intros[=])).
+  intros Hv. induction v; intros v'; dependent elimination v'...
+  destruct (Hv h (vec_inB h v) h0)... edestruct IHv.
+  - intros x H. apply Hv. now right.
+  - left. f_equal. apply e.
+  - right. intros H. inversion H. resolve_existT. tauto.
+Qed.
 
-  Instance in_dec {b : falsity_flag} (phi : form) A :
-    Dec.dec (phi el A).
+Instance dec_vec X {HX : eq_dec X} n : eq_dec (vec X n).
+Proof.
+  intros v. refine (dec_vec_in _ _ _ _).
+Qed.
+
+Section EqDec.
+  
+  Context {Σ_funcs : funcs_signature}.
+  Context {Σ_preds : preds_signature}.
+  Context {ops : operators}.
+
+  Hypothesis eq_dec_Funcs : eq_dec syms.
+  Hypothesis eq_dec_Preds : eq_dec preds.
+  Hypothesis eq_dec_binop : eq_dec binop.
+  Hypothesis eq_dec_quantop : eq_dec quantop.
+
+  Instance dec_term : eq_dec term.
+  Proof with subst; try (now left + (right; intros[=]; resolve_existT; congruence)).
+    intros t. induction t as [ | ]; intros [|? v']...
+    - decide (x = n)... 
+    - decide (F = f)... destruct (dec_vec_in _ _ _ X v')...
+  Qed.
+
+  Instance dec_falsity : eq_dec falsity_flag.
   Proof.
-  Admitted.
+    intros b b'. unfold Dec.dec. decide equality.
+  Qed.
+
+  Lemma eq_dep_falsity b phi psi :
+    eq_dep falsity_flag (@form Σ_funcs Σ_preds ops) b phi b psi <-> phi = psi.
+  Proof.
+    rewrite <- eq_sigT_iff_eq_dep. split.
+    - intros H. resolve_existT. reflexivity.
+    - intros ->. reflexivity.
+  Qed.
+
+  Lemma dec_form_dep {b1 b2} phi1 phi2 : dec (eq_dep falsity_flag (@form _ _ _) b1 phi1 b2 phi2).
+  Proof with subst; try (now left + (right; intros ? % eq_sigT_iff_eq_dep; resolve_existT; congruence)).
+    unfold dec. revert phi2; induction phi1; intros; try destruct phi2.
+    all: try now right; inversion 1. now left.
+    - decide (b = b0)... decide (P = P0)... decide (v = v0)... right.
+      intros [=] % eq_dep_falsity. resolve_existT. tauto.
+    - decide (b = b1)... decide (b0 = b2)... destruct (IHphi1_1 phi2_1).
+      + apply eq_dep_falsity in e as ->. destruct (IHphi1_2 phi2_2).
+        * apply eq_dep_falsity in e as ->. now left.
+        * right. rewrite eq_dep_falsity in *. intros [=]. now resolve_existT.
+      + right. rewrite eq_dep_falsity in *. intros [=]. now repeat resolve_existT.
+    - decide (b = b0)... decide (t = t1)... decide (t0 = t2)...
+    - decide (b = b0)... decide (q = q0)... destruct (IHphi1 phi2).
+      + apply eq_dep_falsity in e as ->. now left.
+      + right. rewrite eq_dep_falsity in *. intros [=]. now resolve_existT.
+  Qed.
+
+  Lemma dec_form {ff : falsity_flag} : eq_dec form.
+  Proof.
+    intros phi psi. destruct (dec_form_dep phi psi); rewrite eq_dep_falsity in *; firstorder.
+  Qed.
+
+End EqDec.
+
+Instance dec_form' {b : falsity_flag} :
+  eq_dec form.
+Proof.
+  apply dec_form; intros x y; unfold Dec.dec; decide equality.
+Qed.
+
+Instance list_in_dec X x (A : list X) :
+  eq_dec X -> Dec.dec (x el A).
+Proof.
+  intros d. induction A; cbn.
+  - now right.
+  - destruct IHA, (d a x); firstorder.
+Qed.
+
+Section Enumerability.
 
   Fixpoint L_ded {p : peirce} {b : falsity_flag} (A : list form) (n : nat) : list form :=
     match n with
@@ -329,11 +409,6 @@ Proof.
   intros H. exists (fun n => let (n, m) := decode n in nth_error (L n) m).
   intros x. rewrite list_enumerator_to_enumerator. apply H.
 Qed.
-
-Instance form_eq (phi psi : form) :
-  Dec.dec (phi = psi).
-Proof.
-Admitted.
 
 Theorem enumerable_Q_prv (Φ : nat -> form) :
   enumerable (fun n => Q ⊢I (Φ n)).
