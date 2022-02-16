@@ -16,8 +16,6 @@ Section Model.
   Notation "⊨ phi" := (forall rho, rho ⊨ phi) (at level 21).
   Variable axioms : forall ax, PA ax -> ⊨ ax.
 
-  Hypothesis delta0_definite : forall phi, delta0 phi -> Q ⊢I phi ∨ ¬ phi.
-
   Notation "N⊨ phi" := (forall rho, @sat _ _ nat interp_nat _ rho phi) (at level 40).
   Notation "x 'i⧀' y" := (exists d : D, y = iσ (x i⊕ d) ) (at level 40).
 
@@ -25,6 +23,7 @@ Section Model.
   Variable ψ : form.
   Variable Hψ : bounded 2 ψ /\ (forall x, Q ⊢I ∀ ψ[up (num x)..] <--> $0 == num (Irred x) ).
 
+  Hypothesis delta0_definite : forall phi, delta0 phi -> Q ⊢I phi ∨ ¬ phi.
 
   Definition div e d := exists k : D, e i⊗ k = d.
   Definition div_num n (d : D) := exists e, inu n i⊗ e = d.
@@ -135,16 +134,16 @@ Section Model.
   Qed.
 
 
-  
+
   Lemma delta0_ternary_definite phi :
     delta0 phi -> bounded 3 phi -> ⊨ ∀∀∀ phi ∨ ¬ phi.
   Proof.
     intros d0 b3.
-    intros rho. refine (soundness _ _ _ _).
-      assert (List.map (subst_form ↑) Q = Q) as Q_closed.
-      { now cbn. }
-      do 3 apply AllI. rewrite !Q_closed. now apply delta0_definite. 
-      intros ??. apply axioms. now constructor.
+    intros rho. cbn. intros ???.
+    specialize (delta0_definite _ d0) as H.
+    apply soundness in H.
+    apply H. intros ??.
+    apply axioms. now constructor.
   Qed.
 
   Lemma LEM_bounded_exist_ternary' phi : 
@@ -196,11 +195,7 @@ Section Model.
     intros d0 b3 b y.
     unshelve refine (let D' := LEM_bounded_exist_ternary' (∃ $0 ⧀ $3 ∧ phi) _ _ in _); auto.
     - apply LEM_bounded_exist_ternary'; auto.
-      intros rho. refine (soundness _ _ _ _).
-      assert (List.map (subst_form ↑) Q = Q) as Q_closed.
-      { now cbn. }
-      do 3 apply AllI. rewrite !Q_closed. now apply delta0_definite. 
-      intros ??. apply axioms. now constructor.
+      now apply delta0_ternary_definite.
     - repeat solve_bounds. eapply bounded_up; eauto.
     - specialize (D' sigma b b y); fold sat in *.
       destruct D' as [H|nH].
