@@ -194,5 +194,5 @@ Section Enumerability.
 
 End Enumerability.
 
-Variable surj_form_ : { Φ : nat -> form & surj Φ }.
-Variable enumerable_Q_prv : forall Φ : nat -> form, enumerable (fun n => Q ⊢I (Φ n)).
+(*Variable surj_form_ : { Φ : nat -> form & surj Φ }.
+Variable enumerable_Q_prv : forall Φ : nat -> form, enumerable (fun n => Q ⊢I (Φ n)).*)
