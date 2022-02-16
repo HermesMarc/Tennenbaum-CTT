@@ -59,7 +59,7 @@ Definition enumerable {X} p := exists f : nat -> option X, forall x, p x <-> exi
 Definition convering X Y (f :  X -> option Y) := forall y, exists x, f x = Some y.
 Definition covers X Y := sigT (convering X Y). 
 Definition quasi_convering X Y (f :  X -> option Y) := forall y, ~~ exists x, f x = Some y.
-Definition  quasi_covers X Y := ex (quasi_convering X Y).
+Definition quasi_covers X Y := ex (quasi_convering X Y).
 
 Definition Enumerable X := exists f : nat -> option X, forall x, exists n, f n = Some x.
 Definition Discrete X := Dec (fun p : X * X => fst p = snd p).
