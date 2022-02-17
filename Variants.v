@@ -1,4 +1,4 @@
-Require Import FOL Peano Tarski Deduction NumberTheory Synthetic DecidabilityFacts Formulas Tennenbaum_diagonal Tennenbaum_insep Makholm McCarty Church Coding.
+Require Import FOL Peano Tarski Deduction NumberTheory Synthetic Enumerability DecidabilityFacts Formulas Tennenbaum_diagonal Tennenbaum_insep Makholm McCarty Church Coding.
 
 
 Notation "⊨ phi" := (forall rho, rho ⊨ phi) (at level 21).
@@ -112,35 +112,31 @@ Proof.
   - intros ?. now apply Std_is_Enumerable.
 Qed.
 
-Section Enum.
 
-  Variable surj_form_ : { Φ : nat -> form & surj Φ }.
-  Variable enumerable_Q_prv : forall Φ : nat -> form, enumerable (fun n => Q ⊢I (Φ n)).
+Corollary Tennenbaum_insep :
+  MP -> Discrete D -> (forall d, ~~Dec (Div_nat d)) -> (forall e, ~~std e).
+Proof.
+  intros mp eq DecDiv e He.
+  destruct Irred_repr as [ψ ]; auto.
+  eapply nonDecDiv; eauto.
+  - apply CT_Inseparable; auto.
+    + apply surj_form_.
+    + apply enumerable_Q_prv.
+  - now apply MP_Discrete_stable_std.
+  - now exists e.
+  - intros [d Hd]. apply (DecDiv d).
+    intros h. apply Hd.
+    now apply Dec_div_reduction.
+Qed.
 
-  Corollary Tennenbaum_insep :
-    MP -> Discrete D -> (forall d, ~~Dec (Div_nat d)) -> (forall e, ~~std e).
-  Proof.
-    intros mp eq DecDiv e He.
-    destruct Irred_repr as [ψ ]; auto.
-    eapply nonDecDiv; eauto.
-    - now apply CT_Inseparable.
-    - now apply MP_Discrete_stable_std.
-    - now exists e.
-    - intros [d Hd]. apply (DecDiv d).
-      intros h. apply Hd.
-      now apply Dec_div_reduction.
-  Qed.
-
-  Theorem Tennenbaum2 :
-    MP -> Discrete D -> (forall d, ~~Dec (Div_nat d)) <-> (forall e, std e).
-  Proof.
-    intros mp eq. split.
-    - intros ??. apply MP_Discrete_stable_std; auto.
-      eapply Tennenbaum_insep; eauto.
-    - intros ??. now apply DN, Dec_Div_nat_std.
-  Qed.
-
-End Enum.
+Theorem Tennenbaum2 :
+  MP -> Discrete D -> (forall d, ~~Dec (Div_nat d)) <-> (forall e, std e).
+Proof.
+  intros mp eq. split.
+  - intros ??. apply MP_Discrete_stable_std; auto.
+    eapply Tennenbaum_insep; eauto.
+  - intros ??. now apply DN, Dec_Div_nat_std.
+Qed.
 
 
 Theorem Makholm :
