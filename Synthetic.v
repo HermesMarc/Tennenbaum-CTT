@@ -6,7 +6,8 @@ Definition iffT (X Y : Type) : Type := (X -> Y) * (Y -> X).
 Notation "X <=> Y" := (iffT X Y) (at level 95, no associativity).
 
 Definition surj {X Y} (f : X -> Y) := forall y, exists x, f x = y.
-Definition inj {X Y} (f : X -> Y) := forall x x', f x = f x' -> x = x'.  
+Definition inj {X Y} (f : X -> Y) := forall x x', f x = f x' -> x = x'.
+Definition bij {X Y} (f : X -> Y) := inj f /\ surj f.
 
 Definition definite P := P \/ ~P.
 Definition Definite {X} p := forall x : X, definite (p x).
@@ -27,7 +28,7 @@ Proof.
 Qed.
 
 
-Fact DN_remove {A B} : 
+Fact DN_remove {A B} :
   ~~A -> (A -> ~B) -> ~B.
 Proof. tauto. Qed.
 

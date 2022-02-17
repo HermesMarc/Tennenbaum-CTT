@@ -1,4 +1,4 @@
-Require Import FOL Deduction Tarski DecidabilityFacts NumberTheory.
+Require Import FOL Deduction Tarski DecidabilityFacts Synthetic NumberTheory.
 Require Import List Lia.
 Import Vector.VectorNotations.
 
@@ -1465,6 +1465,3 @@ Fact nonStd_notStd {D I} :
 Proof.
   intros [e He] H; apply He, H.
 Qed.
-
-
-
