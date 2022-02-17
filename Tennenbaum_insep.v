@@ -11,6 +11,8 @@ Notation "x ∣ y" := (exists k, x * k = y) (at level 50).
 
 Section Model.
 
+  Context {Δ0 : Delta0}.
+
   Variable D : Type.
   Variable I : interp D.
   Notation "⊨ phi" := (forall rho, rho ⊨ phi) (at level 21).
@@ -139,10 +141,10 @@ Section Model.
   Lemma delta0_ternary_definite phi :
     delta0 phi -> bounded 3 phi -> ⊨ ∀∀∀ phi ∨ ¬ phi.
   Proof.
-    intros [? d0] b3.
+    intros d0 b3.
     intros rho. cbn. intros ???.
-    specialize (d0 var) as d0.
-    refine (let H := tsoundness d0 _  in _).
+    specialize (delta0_HA phi var d0) as d0'.
+    refine (let H := tsoundness d0' _  in _).
     rewrite subst_var in H.
     apply H. intros ??.
     now apply axioms.
@@ -354,7 +356,7 @@ Section Model.
           rewrite !num_subst. apply closed_num.
           intros[|[]]; cbn; solve_bounds. apply closed_num.
           intros[]; cbn; solve_bounds. apply closed_num.
-        * now repeat eapply subst_delta0.
+        * rewrite !subst_comp. now apply delta0_subst.
         * apply axioms.
         * intros ??. now apply PA_std_axioms.
       + apply Σ1_ternary_complete; auto.
@@ -385,7 +387,7 @@ Section Model.
           rewrite !num_subst. apply closed_num.
           intros[|[]]; cbn; solve_bounds. apply closed_num.
           intros[]; cbn; solve_bounds. apply closed_num.
-        * now repeat eapply subst_delta0.
+        * rewrite !subst_comp. now apply delta0_subst.
         * apply axioms.
         * intros ??. now apply PA_std_axioms.
     Unshelve. all: auto.

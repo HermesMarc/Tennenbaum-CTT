@@ -21,6 +21,7 @@ Definition unary α := bounded 1 α.
 Definition binary α := bounded 2 α.
 
 
+
 Ltac invert_bounds1 :=
   match goal with
     H : bounded _ _ |- _ => inversion H; subst; clear H
@@ -32,46 +33,26 @@ Ltac invert_bounds :=
     H : existT _ _ _ = existT _ _ _ |- _ => apply Eqdep_dec.inj_pair2_eq_dec in H; try decide equality; subst
   end.
 
-
-Section Delta0.
-
-  (** Define Δ0 and Σ1 formulas *)
-
-  Definition delta0 ϕ := 
-    prod (forall s, bounded 0 (ϕ[s]) -> {Q ⊢I ϕ[s]} + {Q ⊢I ¬ ϕ[s]})
-        (forall s, PA ⊢TI ϕ[s] ∨ ¬ ϕ[s]).
-    
-    Ltac invert_delta1 :=
-    match goal with
-      H : delta0 _ |- _ => inversion H; subst; clear H
-    end.
-
-    Ltac invert_delta :=
-    invert_delta1; 
-    repeat match goal with
-      H : existT _ _ _ = existT _ _ _ |- _ => apply Eqdep_dec.inj_pair2_eq_dec in H; try decide equality; subst
-    end.
+Lemma inversion_bounded_bin α β n b : 
+  bounded n (bin b α β) -> bounded n α /\ bounded n β.
+Proof.
+  intros H. destruct b.
+  all: now invert_bounds.
+Qed.
 
 
-  Lemma inversion_bounded_bin α β n b : 
-    bounded n (bin b α β) -> bounded n α /\ bounded n β.
-  Proof.
-    intros H. destruct b.
-    all: now invert_bounds.
-  Qed.
-
-  (* Formulas stay at their level of the hierarchy under substitions. *)
-  
-  Fact subst_delta0 {ff : falsity_flag} phi sigma : 
-    delta0 phi -> delta0 phi[sigma].
-  Proof.
-    intros [H1 H2]. 
-    split; intros s; rewrite subst_comp; [apply H1|apply H2].
-  Qed.
 
 
-End Delta0.
 
+(** Define Δ0 formulas *)
+
+Class Delta0 : Type :=  
+  mk_Delta0{ 
+    delta0 : form -> Prop
+  ; delta0_Q : forall ϕ s, delta0 ϕ -> bounded 0 (ϕ[s]) -> {Q ⊢I ϕ[s]} + {Q ⊢I ¬ ϕ[s]}
+  ; delta0_HA : forall ϕ s, delta0 ϕ -> PA ⊢TI ϕ[s] ∨ ¬ ϕ[s]
+  ; delta0_subst : forall ϕ s, delta0 ϕ -> delta0 (ϕ[s])
+  }.
 
 
 (* Numerals are closed terms. *)
@@ -158,19 +139,21 @@ Proof.
 Qed.
 
 
+Section Delta0.
+
+  Context {Δ0 : Delta0}.
 
 Lemma Q_neg_equiv ϕ s : 
   delta0 ϕ -> bounded 0 ϕ[s] -> (~ Q ⊢I ϕ[s]) <-> Q ⊢I ¬ ϕ[s].
 Proof.
-  intros [dec ]. split.
-    - intros. destruct (dec s); tauto.
+  intros d0. split.
+    - intros. destruct (delta0_Q ϕ s); tauto.
     - intros H1 H2.
       apply PA_consistent.
       exists Q. split. intros.
       now constructor.
       eapply IE. apply H1. apply H2.
 Qed.
-
 
 (* Results concerning closed Delta_0 Formulas *)
 
@@ -191,7 +174,8 @@ Section Closed.
     {Q ⊢I phi} + {Q ⊢I ¬ phi}.
   Proof.
     setoid_rewrite <-subst_var. cbn.
-    apply H0. now rewrite subst_var.
+    apply delta0_Q; auto. 
+    now rewrite subst_var.
   Qed.
 
 
@@ -289,8 +273,6 @@ Section Closed.
 End Closed.
 
 
-
-
 Notation "N⊨ phi" := (forall rho, @sat _ _ nat interp_nat _ rho phi) (at level 40).
 
 Section Sigma1.
@@ -312,7 +294,8 @@ Section Sigma1.
       apply closed_num.
       intros [|]; solve_bounds; cbn.
       apply closed_num.
-    - now repeat apply subst_delta0.
+    - rewrite subst_comp.
+      now apply delta0_subst.
   Qed.
 
   Lemma Σ1_complete n :
@@ -362,7 +345,8 @@ Section Sigma1.
       apply closed_num.
       intros [|]; solve_bounds; cbn.
       apply closed_num.
-    - now repeat apply subst_delta0.
+    - rewrite !subst_comp.
+      now apply delta0_subst.
   Qed.
 
   Lemma Σ1_ternary_complete n :
@@ -380,3 +364,5 @@ Section Sigma1.
   Qed.
 
 End Sigma1.
+
+End Delta0.

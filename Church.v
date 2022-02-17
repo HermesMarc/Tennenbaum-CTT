@@ -18,7 +18,7 @@ Definition binary α := bounded 2 α.
 Section ChurchThesis.
 
 Instance ff : falsity_flag := falsity_on.
-
+Context {Δ0 : Delta0}.
 
 Definition represents ϕ f := forall x, Q ⊢I ∀ ϕ[up (num x)..] <--> $0 == num (f x).
 Definition CT_Q := forall f : nat -> nat, exists ϕ, bounded 3 ϕ /\ inhabited(delta0 ϕ) /\ represents (∃ ϕ) f.
@@ -67,7 +67,7 @@ Proof.
   { eapply subst_bound; eauto.
     intros [|[|[]]]; cbn. 1,2,3: try solve_bounds. lia. }
   split.
-  { constructor. now apply subst_delta0. }
+  { constructor. now apply delta0_subst. }
   repeat split.
   all: intros x; specialize (H x).
   all: eapply AllE with (t := num 0) in H; cbn -[Q] in H.
@@ -98,7 +98,7 @@ Proof.
   { eapply subst_bound; eauto.
     intros [|[|[]]]; cbn. 1,2,3: try solve_bounds. lia. }
   split.
-  { constructor. now apply subst_delta0. }
+  { constructor. now apply delta0_subst. }
   repeat split.
   all: intros x; specialize (H x).
   all: eapply AllE with (t := num 0) in H; cbn -[Q] in H.
@@ -127,13 +127,13 @@ Proof.
   exists Φ; split. 2: split.
   - unfold Φ. eapply subst_bound; eauto.
     intros [|[|[]]]; cbn; repeat solve_bounds.
-  - constructor. now apply subst_delta0. 
+  - constructor. now apply delta0_subst. 
   - intros x. rewrite Hf. split.
     + intros [n Hn]. symmetry in Hn.
       apply Σ1_ternary_complete.
       { unfold Φ. eapply subst_bound; eauto.
       intros [|[|[]]]; cbn; repeat solve_bounds. }
-      { now apply subst_delta0. } 
+      {unfold Φ. now apply delta0_subst. }
       exists n. specialize (H n).
       apply soundness in H.
       unshelve refine (let H := (H nat interp_nat (fun _ => 0)) _ in _ ).
@@ -176,13 +176,13 @@ Proof.
   exists Φ; split. 2: split.
   - unfold Φ. eapply subst_bound; eauto.
     intros [|[|[]]]; cbn; repeat solve_bounds.
-  - constructor. now apply subst_delta0. 
+  - constructor. now apply delta0_subst. 
   - intros x. rewrite Hf. split.
     + intros [n Hn]. symmetry in Hn.
       apply Σ1_ternary_complete.
       { unfold Φ. eapply subst_bound; eauto.
       intros [|[|[]]]; cbn; repeat solve_bounds. }
-      { now apply subst_delta0. } 
+      {unfold Φ. now apply delta0_subst. }
       exists n. specialize (H n).
       apply soundness in H.
       unshelve refine (let H := (H nat interp_nat (fun _ => 0)) _ in _ ).

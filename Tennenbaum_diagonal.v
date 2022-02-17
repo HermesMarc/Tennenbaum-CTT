@@ -16,6 +16,8 @@ Definition binary α := bounded 2 α.
 
 Section Model.
 
+  Context {Δ0 : Delta0}.
+
   Variable D : Type.
   Variable I : interp D.
   Notation "⊨ phi" := (forall rho, rho ⊨ phi) (at level 21).

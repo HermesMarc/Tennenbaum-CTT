@@ -7,6 +7,7 @@ Notation "⊨ phi" := (forall rho, rho ⊨ phi) (at level 21).
 Section Variants.
 
 Instance ff : falsity_flag := falsity_on.
+Context {Δ0 : Delta0}.
 
 Variable D : Type.
 Variable I : interp D.
@@ -106,7 +107,7 @@ Proof.
   split.
   - intros ?.
     assert (~ exists e, ~ std e) as He.
-    { eapply Tennenbaum_diagonal with (ψ:=ψ); eauto. }
+    { eapply Tennenbaum_diagonal with (ψ0:=ψ); eauto. }
     intros e. apply MP_Discrete_stable_std; auto.
     intros nH. apply He. now exists e.
   - intros ?. now apply Std_is_Enumerable.
