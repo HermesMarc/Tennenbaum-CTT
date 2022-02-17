@@ -37,8 +37,10 @@ Section Delta0.
 
   (** Define Δ0 and Σ1 formulas *)
 
-  Definition delta0 ϕ := forall s, bounded 0 (ϕ[s]) -> {Q ⊢I ϕ[s]} + {Q ⊢I ¬ ϕ[s]}.
-
+  Definition delta0 ϕ := 
+    prod (forall s, bounded 0 (ϕ[s]) -> {Q ⊢I ϕ[s]} + {Q ⊢I ¬ ϕ[s]})
+        (forall s, PA ⊢TI ϕ[s] ∨ ¬ ϕ[s]).
+    
     Ltac invert_delta1 :=
     match goal with
       H : delta0 _ |- _ => inversion H; subst; clear H
@@ -63,7 +65,8 @@ Section Delta0.
   Fact subst_delta0 {ff : falsity_flag} phi sigma : 
     delta0 phi -> delta0 phi[sigma].
   Proof.
-    intros H s. rewrite subst_comp. apply H.
+    intros [H1 H2]. 
+    split; intros s; rewrite subst_comp; [apply H1|apply H2].
   Qed.
 
 
@@ -159,7 +162,7 @@ Qed.
 Lemma Q_neg_equiv ϕ s : 
   delta0 ϕ -> bounded 0 ϕ[s] -> (~ Q ⊢I ϕ[s]) <-> Q ⊢I ¬ ϕ[s].
 Proof.
-  intros dec. split.
+  intros [dec ]. split.
     - intros. destruct (dec s); tauto.
     - intros H1 H2.
       apply PA_consistent.

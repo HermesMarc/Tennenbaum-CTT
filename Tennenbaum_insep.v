@@ -23,7 +23,6 @@ Section Model.
   Variable ψ : form.
   Variable Hψ : bounded 2 ψ /\ (forall x, Q ⊢I ∀ ψ[up (num x)..] <--> $0 == num (Irred x) ).
 
-  Hypothesis delta0_definite : forall phi, delta0 phi -> Q ⊢I phi ∨ ¬ phi.
 
   Definition div e d := exists k : D, e i⊗ k = d.
   Definition div_num n (d : D) := exists e, inu n i⊗ e = d.
@@ -84,7 +83,8 @@ Section Model.
     destruct (Insep_ (CT_RTs ct)) as (A & B & HA & HB & disj & H).
     destruct ((CT_RTw ct) A HA) as [α (Ha0 & [Ha1] & Hα)],
             ((CT_RTw ct) B HB) as [β (Hb0 & [Hb1] & Hβ)].
-    exists α, β. repeat split; auto; unfold weak_repr in *.
+    exists α, β. do 4 (split; auto).  
+    repeat split; auto; unfold weak_repr in *.
     - intros n h%soundness. apply (disj n).
       rewrite Hα, Hβ.
       split; apply Σ1_ternary_complete; auto.
@@ -122,7 +122,8 @@ Section Model.
     destruct (WInsep_ (WCT_WRTs wct)) as (A & B & HA & HB & disj & H).
     apply (DN_chaining ((WCT_WRTw wct) B HB)), (DN_chaining ((WCT_WRTw wct) A HA)), DN.
     intros [α (Ha0 & [Ha1] & Hα)] [β (Hb0 & [Hb1] & Hβ)].
-    exists α, β. repeat split; auto; unfold weak_repr in *.
+    exists α, β. do 4 (split; auto).
+    repeat split; unfold weak_repr in *.
     - intros n h%soundness. apply (disj n).
       rewrite Hα, Hβ.
       split; apply Σ1_ternary_complete; auto.
@@ -138,12 +139,13 @@ Section Model.
   Lemma delta0_ternary_definite phi :
     delta0 phi -> bounded 3 phi -> ⊨ ∀∀∀ phi ∨ ¬ phi.
   Proof.
-    intros d0 b3.
+    intros [? d0] b3.
     intros rho. cbn. intros ???.
-    specialize (delta0_definite _ d0) as H.
-    apply soundness in H.
+    specialize (d0 var) as d0.
+    refine (let H := tsoundness d0 _  in _).
+    rewrite subst_var in H.
     apply H. intros ??.
-    apply axioms. now constructor.
+    now apply axioms.
   Qed.
 
   Lemma LEM_bounded_exist_ternary' phi : 

@@ -63,10 +63,12 @@ Proof.
   destruct (Dec_decider_nat _ Dec_p) as [f Hf].
   destruct (ct f) as [ϕ [b2 [[s1] H]]].
   pose (Φ := ϕ[up (num 0)..]).
-  exists Φ. repeat split; unfold Φ.
+  exists Φ. split; unfold Φ.
   { eapply subst_bound; eauto.
     intros [|[|[]]]; cbn. 1,2,3: try solve_bounds. lia. }
-  { now apply subst_delta0. }
+  split.
+  { constructor. now apply subst_delta0. }
+  repeat split.
   all: intros x; specialize (H x).
   all: eapply AllE with (t := num 0) in H; cbn -[Q] in H.
   all: apply prv_split in H; destruct H as [H1 H2].
@@ -92,10 +94,12 @@ Proof.
   destruct (Dec_decider_nat _ Dec_p) as [f Hf]. 
   apply (DN_chaining (wct f)), DN. intros [ϕ [b2 [[s1] H]]].
   pose (Φ := ϕ[up (num 0)..]).
-  exists Φ. repeat split; unfold Φ.
+  exists Φ. split; unfold Φ.
   { eapply subst_bound; eauto.
     intros [|[|[]]]; cbn. 1,2,3: try solve_bounds. lia. }
-  { now apply subst_delta0. }
+  split.
+  { constructor. now apply subst_delta0. }
+  repeat split.
   all: intros x; specialize (H x).
   all: eapply AllE with (t := num 0) in H; cbn -[Q] in H.
   all: apply prv_split in H; destruct H as [H1 H2].
