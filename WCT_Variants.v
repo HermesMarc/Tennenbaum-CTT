@@ -12,7 +12,7 @@ Context {Δ0 : Delta0}.
 Variable D : Type.
 Variable I : interp D.
 Variable axioms : forall ax, PA ax -> ⊨ ax.
-Variable ct : CT_Q.
+Variable wct : WCT_Q.
 
 Hypothesis delta0_definite : forall phi, delta0 phi -> Q ⊢I phi ∨ ¬ phi.
 
@@ -23,9 +23,10 @@ Definition div_pi ψ n a :=  (inu n .: (fun _ => a)) ⊨ (∃ (ψ ∧ ∃ $1 ⊗
 Definition prime_form ψ := bounded 2 ψ /\ (forall x, Q ⊢I ∀ ψ[up (num x)..] <--> $0 == num (Irred x) ).
 
 Lemma Irred_repr :
-  exists ψ, prime_form ψ.
+  ~~ exists ψ, prime_form ψ.
 Proof.
-  destruct (ct Irred) as [phi Hphi].
+  apply (DN_chaining (wct Irred)), DN.
+  intros [phi Hphi].
   exists (∃ phi). split.
   - now constructor.
   - apply Hphi.
@@ -38,7 +39,6 @@ Proof.
   - intros [d [->%ψ_repr H]]; auto.
   - intros. exists (inu (Irred n)). rewrite ψ_repr; auto.
 Qed.
-
 
 Fact MP_Discrete_stable_std :
   MP -> Discrete D -> Stable std.
@@ -56,10 +56,11 @@ Proof.
 Qed.
 
 Lemma Dec_Div_nat_std :
-  forall e, std e -> Dec (Div_nat e).
+  forall e, std e -> ~~ Dec (Div_nat e).
 Proof.
   intros e [n <-].
-  destruct Irred_repr as [ψ ]; auto.
+  apply (DN_chaining (Irred_repr)), DN.
+  intros [ψ ].
   constructor; intros x.
   destruct n.
   - left. exists (inu 0).
@@ -101,33 +102,35 @@ Qed.
 Theorem Tennenbaum1 :
   MP -> Discrete D -> Enumerable D <-> forall e, std e.
 Proof.
-  intros mp eq. 
-  destruct Irred_repr as [ψ ]; auto.
-  apply CT_RTs in ct.
+  intros mp eq.
   split.
   - intros ?.
-    assert (~ exists e, ~ std e) as He.
-    { eapply Tennenbaum_diagonal with (ψ0:=ψ); eauto. }
-    intros e. apply MP_Discrete_stable_std; auto.
-    intros nH. apply He. now exists e.
+  assert (~ exists e, ~ std e) as He.
+  apply (DN_remove (Irred_repr)).
+  intros [ψ ].
+  { eapply Tennenbaum_diagonal' with (ψ0:=ψ); eauto.
+    now apply WCT_WRTs. }
+  intros e. apply MP_Discrete_stable_std; auto.
+  intros nH. apply He. now exists e.
   - intros ?. now apply Std_is_Enumerable.
 Qed.
-
 
 Corollary Tennenbaum_insep :
   MP -> Discrete D -> (forall d, ~~Dec (Div_nat d)) -> (forall e, ~~std e).
 Proof.
-  intros mp eq DecDiv e He.
-  destruct Irred_repr as [ψ ]; auto.
-  eapply nonDecDiv; eauto.
-  - apply CT_Inseparable; auto.
-    + apply surj_form_.
-    + apply enumerable_Q_prv.
-  - now apply MP_Discrete_stable_std.
-  - now exists e.
-  - intros [d Hd]. apply (DecDiv d).
-    intros h. apply Hd.
-    now apply Dec_div_reduction.
+  intros mp eq DecDiv e.
+  apply (DN_remove (Irred_repr)).
+  intros [ψ ].
+  refine (DN_remove (WCT_Inseparable _ _ wct) _); auto.
+  - apply surj_form_.
+  - apply enumerable_Q_prv.
+  - intros ? He.
+    eapply nonDecDiv; eauto.
+    + now apply MP_Discrete_stable_std.
+    + now exists e.
+    + intros [d Hd]. apply (DecDiv d).
+      intros h. apply Hd.
+      now apply Dec_div_reduction.
 Qed.
 
 Theorem Tennenbaum2 :
@@ -136,7 +139,7 @@ Proof.
   intros mp eq. split.
   - intros ??. apply MP_Discrete_stable_std; auto.
     eapply Tennenbaum_insep; eauto.
-  - intros ??. now apply DN, Dec_Div_nat_std.
+  - intros ??. now apply Dec_Div_nat_std.
 Qed.
 
 

@@ -12,6 +12,10 @@ FOL.v
 Deduction.v
 Tarski.v
 
+Dec.v
+ListEnumerabilityFacts.v
+Enumerability.v
+
 Peano.v
 Formulas.v
 Coding.v
@@ -21,3 +25,4 @@ Tennenbaum_insep.v
 Makholm.v
 McCarty.v
 Variants.v
+WCT_Variants.v

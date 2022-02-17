@@ -12,18 +12,10 @@ Notation "x ∣ y" := (exists k, x * k = y) (at level 50).
 Definition unary alpha := bounded 1 alpha.
 Definition binary alpha := bounded 2 alpha.
 
-Definition std {D I} d := exists n, @inu D I n = d.
-Definition stdModel D {I} := forall d, exists n, (@inu D I) n = d.
-Definition nonStd D {I} := exists e, ~ @std D I e.
-
-Fact nonStd_notStd {D I} :
-  @nonStd D I -> ~ stdModel D.
-Proof.
-  intros [e He] H; apply He, H.
-Qed.
-
 
 Section Model.
+
+  Context {Δ0 : Delta0}.
 
   Variable D : Type.
   Variable I : interp D.
@@ -116,7 +108,8 @@ Qed.
 
 
 
-Lemma lt_equiv x y : x < y <-> inu x i⧀ inu y.
+Lemma lt_equiv x y : 
+  x < y <-> inu x i⧀ inu y.
 Proof.
   assert (x < y <-> exists k, S x + k = y) as H.
   split.
@@ -137,7 +130,8 @@ Proof.
         [now rewrite add_rec, Hk | apply axioms | apply axioms].
 Qed.
 
-Lemma num_lt_nonStd n d : ~ std d -> inu n i⧀ d.
+Lemma num_lt_nonStd n d : 
+  ~ std d -> inu n i⧀ d.
 Proof.
   intros nonStd.
   destruct (@trichotomy D I axioms (inu n) d) as [H|[<-|H]]; auto.
@@ -442,6 +436,7 @@ Section notStd.
     { eapply bounded_subst. apply unary_alpha.
     intros []; try now intros. lia. }
     setoid_rewrite <-E. rewrite !subst_var.
+    rewrite unfold_sless, !num_subst in *.
     apply H.
     apply Overspill_DN in H'; auto.
     2 : { repeat solve_bounds.
@@ -491,13 +486,15 @@ Section notStd.
     eapply bounded_subst. apply binary_alpha.
     intros [|[]]; cbn; try reflexivity; lia.
     setoid_rewrite <-E. rewrite !subst_var.
-    specialize (H n). rewrite num_subst in H.
+    specialize (H n). 
+    rewrite unfold_sless, !num_subst in H.
     apply H.
     apply Overspill_DN in H'; auto.
-    2 : { repeat solve_bounds.
-          all: eapply bounded_up; try apply binary_alpha; try apply Hψ.
-          all: eauto; try lia.
-          all: admit. }
+    2 : { solve_bounds.
+          all: repeat solve_bounds.
+          2, 3: try eapply bounded_up; try apply binary_alpha; try apply Hψ; lia.
+          all: eapply subst_bound; eauto.
+          all: intros [|[]]; solve_bounds. }
     apply (DN_chaining H'), DN. clear H' H.
       intros (e & He1 & He2). intros b.
       cbn in He2. specialize (He2 (fun _ => i0) b) as [a Ha].
@@ -521,7 +518,7 @@ Section notStd.
       eapply bound_ext. apply Hψ. 2: apply Hk.
       intros [|[]]; try now intros. lia.
       apply Hk.
-  Admitted.
+  Qed.
 
 
 
@@ -542,13 +539,14 @@ Section notStd.
     eapply bounded_subst. apply binary_alpha.
     intros [|[]]; cbn; try reflexivity; lia.
     setoid_rewrite <-E. rewrite !subst_var.
-    specialize (H n). rewrite num_subst in H.
+    specialize (H n). 
+    rewrite unfold_sless, num_subst in H.
     apply H.
     apply Overspill_DN in H'; auto.
     2 : { repeat solve_bounds.
-          all: eapply bounded_up; try apply binary_alpha; try apply Hψ.
-          all: eauto; try lia.
-          all: admit. }
+          2,3 : eapply bounded_up; try apply binary_alpha; try apply Hψ; try lia.
+          all: eapply subst_bound; eauto.
+          all: intros [|[]]; solve_bounds. }
     rewrite <-NNN_N.
     apply (DN_chaining H'), DN. clear H' H.
       intros (e & He1 & He2).
@@ -579,154 +577,5 @@ Section notStd.
 
 
 End notStd.
-
-
-Lemma LEM_binary phi : 
-  delta0 phi -> binary phi -> ⊨ ∀∀ phi ∨ ¬ phi.
-Proof.
-  intros delta0_phi binary_phi rho d e.
-  induction phi using form_ind_falsity_on.
-  - cbn. tauto.
-  - destruct P.
-  - apply inversion_bounded_bin in binary_phi.
-    apply inversion_delta0_bin in delta0_phi.
-    specialize (IHphi1 (fst delta0_phi) (proj1 binary_phi)).
-    specialize (IHphi2 (snd delta0_phi) (proj2 binary_phi) ).
-    destruct b.
-    all: fold sat in *; cbn in *; tauto.
-  - cbn. eapply Peano.eq_dec. apply axioms.
-  - inversion delta0_phi.
-Qed.
-
-
-Lemma LEM_bounded_exist_sat phi : 
-  delta0 phi -> binary phi -> ⊨ ∀∀ (∃ $0 ⧀ $2 ∧ phi) ∨ ¬ (∃ $0 ⧀ $2 ∧ phi).
-Proof.
-  intros delta0_phi binary_phi ρ N.
-  pose (Phi := ∀ (∃ $0 ⧀ $2 ∧ phi) ∨ ¬ (∃ $0 ⧀ $2 ∧ phi)).
-  assert (H : forall d rho, (d.:rho) ⊨ Phi).
-  apply induction. apply axioms.
-  repeat solve_bounds.
-  eapply bounded_up. apply binary_phi. lia.
-  eapply bounded_up. apply binary_phi. lia.
-  - intros rho y. cbn. right.
-    now intros (? & ?%nolessthen_zero & ?).
-  - intros n IHN rho y. cbn.
-    destruct (IHN rho y) as [IH|IH]; fold sat in *; cbn in IH.
-    + left. destruct IH as [d Hd]. exists d. split.
-      ++ destruct Hd as [[k ->] _]. exists (iσ k). 
-        now rewrite add_rec_r.
-      ++ eapply bound_ext. apply binary_phi.
-        2 : apply Hd.
-        intros [|[]]; solve_bounds.
-    + specialize (LEM_binary phi delta0_phi binary_phi) as lem_phi.
-      destruct (lem_phi (fun _ => i0) y n) as [HN|HN].
-      ++ left. exists n. split.
-        exists i0. now rewrite add_zero_r.
-        eapply bound_ext. apply binary_phi.
-        2 : apply HN.
-        intros [|[]]; solve_bounds.
-      ++ right. intros H. apply IH.
-        destruct H as (x & Hx1%lt_S & Hx2).
-        exists x. split.
-        destruct Hx1 as [| ->]. assumption.
-        exfalso. apply HN.
-        eapply bound_ext. apply binary_phi.
-        2 : apply Hx2.
-        intros [|[]]; solve_bounds.
-        eapply bound_ext. apply binary_phi.
-        2 : apply Hx2.
-        intros [|[]]; solve_bounds.
-        apply axioms.
-    - intros y. specialize (H N (fun _ => N) y).
-      fold sat in H; cbn in *. 
-      destruct H as [h|h].
-      left. destruct h as [d Hd]. 
-      exists d. split. apply Hd.
-      eapply bound_ext. apply binary_phi.
-      2 : apply Hd.
-      intros [|[]]; solve_bounds.
-      right. intros h1. apply h.
-      destruct h1 as [d Hd]. 
-      exists d. split. apply Hd.
-      eapply bound_ext. apply binary_phi.
-      2 : apply Hd.
-      intros [|[]]; solve_bounds.
-Qed.
-
-
-Lemma LEM_bounded_exist_sat' phi : 
-  delta0 phi -> bounded 2 phi -> ⊨ ∀∀ (∃ $0 ⧀ $2 ∧ phi) ∨ (∀ $0 ⧀ $2 --> ¬ phi).
-Proof.
-  intros delta0_phi binary_phi ρ N.
-  pose (Phi := ∀ (∃ $0 ⧀ $2 ∧ phi) ∨ (∀ $0 ⧀ $2 --> ¬ phi)).
-  assert (H : forall d rho, (d.:rho) ⊨ Phi).
-  apply induction. apply axioms.
-  repeat solve_bounds.
-  eapply bounded_up. apply binary_phi. lia.
-  eapply bounded_up. apply binary_phi. lia.
-  - intros rho y. cbn. right.
-    now intros ? ?%nolessthen_zero.
-  - intros n IHN rho y. cbn.
-    destruct (IHN rho y) as [IH|IH]; fold sat in *; cbn in IH.
-    + left. destruct IH as [d Hd]. exists d. split.
-      ++ destruct Hd as [[k ->] _]. exists (iσ k). 
-        now rewrite add_rec_r.
-      ++ eapply bound_ext. apply binary_phi.
-        2 : apply Hd.
-        intros [|[]]; solve_bounds.
-    + specialize (LEM_binary phi delta0_phi binary_phi ) as lem_phi.
-      destruct (lem_phi (fun _ => i0) y n) as [HN|HN].
-      ++ left. exists n. split.
-        exists i0. now rewrite add_zero_r.
-        eapply bound_ext. apply binary_phi.
-        2 : apply HN.
-        intros [|[]]; solve_bounds.
-      ++ right. intros x [LT| ->]%lt_S.
-          specialize (IH _ LT).
-          intros nH. apply IH.
-          eapply bound_ext. apply binary_phi.
-          2 : apply nH.
-          intros [|[]]; solve_bounds.
-          intros nH. apply HN.
-          eapply bound_ext. apply binary_phi.
-          2 : apply nH.
-          intros [|[]]; solve_bounds.
-          apply axioms.
-    - intros y. specialize (H N (fun _ => N) y).
-      fold sat in H; cbn -[Q] in *. 
-      destruct H as [h|h].
-      left. destruct h as [d Hd]. 
-      exists d. split. apply Hd.
-      eapply bound_ext. apply binary_phi.
-      2 : apply Hd.
-      intros [|[]]; solve_bounds.
-      right. intros d Hd. 
-      specialize (h d Hd).
-      intros nH. apply h.
-      eapply bound_ext. apply binary_phi.
-      2 : apply nH.
-      intros [|[]]; solve_bounds.
-Qed.
-
-
-Corollary LEM_bounded_exist {phi} sigma : 
-  delta0 phi -> binary phi -> forall b x, (x .: b .: sigma) ⊨ (∃ $0 ⧀ $2 ∧ phi) \/ ~ (x .: b .: sigma) ⊨ (∃ $0 ⧀ $2 ∧ phi).
-Proof.
-  intros delta0_phi binary_phi b y.
-  specialize (LEM_bounded_exist_sat _ delta0_phi binary_phi) as Hb.
-  destruct (Hb (fun _ => b) b y) as [h|h]; fold sat in *; cbn in h.
-  left. destruct h as [d Hd].
-  exists d. split. apply Hd.
-  eapply bound_ext. apply binary_phi. 2 : apply Hd.
-  intros [|[]]; solve_bounds.
-  right. intros h1. apply h.
-  destruct h1 as [d Hd].
-  exists d. split. apply Hd.
-  eapply bound_ext. apply binary_phi. 2 : apply Hd.
-  intros [|[]]; solve_bounds.
-Qed.
-
-
 End Coding.
 End Model.

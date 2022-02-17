@@ -18,24 +18,24 @@ Definition binary α := bounded 2 α.
 Section ChurchThesis.
 
 Instance ff : falsity_flag := falsity_on.
-
+Context {Δ0 : Delta0}.
 
 Definition represents ϕ f := forall x, Q ⊢I ∀ ϕ[up (num x)..] <--> $0 == num (f x).
-Definition CT_Q :=
-  forall f : nat -> nat, exists ϕ, bounded 2 ϕ /\ inhabited(sigma1 ϕ) /\ represents ϕ f.
-Definition WCT_Q :=
-  forall f : nat -> nat, ~ ~ exists ϕ, bounded 2 ϕ /\ inhabited(sigma1 ϕ) /\ represents ϕ f.
+Definition CT_Q := forall f : nat -> nat, exists ϕ, bounded 3 ϕ /\ inhabited(delta0 ϕ) /\ represents (∃ ϕ) f.
+Definition WCT_Q := forall f : nat -> nat, ~ ~ exists ϕ, bounded 3 ϕ /\ inhabited(delta0 ϕ) /\ represents (∃ ϕ) f.
 
 
 Definition strong_repr ϕ (p : nat -> Prop) := (forall x, p x -> Q ⊢I ϕ[(num x)..]) /\ (forall x, ~ p x -> Q ⊢I ¬ϕ[(num x)..]).
-Definition RT_strong := forall p : nat -> Prop, Dec p -> exists ϕ, bounded 1 ϕ /\ inhabited(sigma1 ϕ) /\ strong_repr ϕ p.
-Definition WRT_strong := forall p : nat -> Prop, Dec p ->  ~ ~ exists ϕ, bounded 1 ϕ /\ inhabited(sigma1 ϕ) /\ strong_repr ϕ p.
+Definition RT_strong := forall p : nat -> Prop, Dec p -> exists ϕ, bounded 2 ϕ /\ inhabited(delta0 ϕ) /\ strong_repr (∃ ϕ) p.
+Definition WRT_strong := forall p : nat -> Prop, Dec p ->  ~ ~ exists ϕ, bounded 2 ϕ /\ inhabited(delta0 ϕ) /\ strong_repr (∃ ϕ) p.
 
 
 Definition weak_repr ϕ (p : nat -> Prop) := (forall x, p x <-> Q ⊢I ϕ[(num x)..]).
-Definition RT_weak := forall p : nat -> Prop, enumerable p -> exists ϕ, bounded 1 ϕ /\ inhabited(sigma1 ϕ) /\ weak_repr ϕ p.
-Definition WRT_weak := forall p : nat -> Prop, enumerable p -> ~ ~ exists ϕ, bounded 1 ϕ /\ inhabited(sigma1 ϕ) /\ weak_repr ϕ p.
+Definition RT_weak := forall p : nat -> Prop, enumerable p -> exists ϕ, bounded 3 ϕ /\ inhabited(delta0 ϕ) /\ weak_repr (∃∃ ϕ) p.
+Definition WRT_weak := forall p : nat -> Prop, enumerable p -> ~ ~ exists ϕ, bounded 3 ϕ /\ inhabited(delta0 ϕ) /\ weak_repr (∃∃ ϕ) p.
 
+
+Definition RT := RT_strong /\ RT_weak.
 
 
 Lemma prv_split {p : peirce} α β Gamma :
@@ -48,40 +48,42 @@ Proof.
   - now constructor.
 Qed.
 
-
 Lemma up_switch ϕ s t :
-  ϕ[(num s)..][(num t)..] = ϕ[up (num t)..][(num s)..].
+  ϕ[up (num s)..][up (num t)..] = ϕ[up (up (num t)..)][up (num s)..].
 Proof.
-  rewrite !subst_comp. apply subst_ext. intros [|[]]; cbn.
-  - now rewrite num_subst.
-  - now rewrite !num_subst.
-  - reflexivity.
+  rewrite !subst_comp. apply subst_ext. 
+  intros [|[|[]]]; cbn; now rewrite ?num_subst.
 Qed.
 
 
-Lemma CT_RTs : 
+Lemma CT_RTs :
   CT_Q -> RT_strong.
 Proof.
   intros ct p Dec_p.
-  destruct (Dec_decider_nat _ Dec_p) as [f Hf]. 
+  destruct (Dec_decider_nat _ Dec_p) as [f Hf].
   destruct (ct f) as [ϕ [b2 [[s1] H]]].
-  pose (Φ := ϕ[(num 0)..]).
-  exists Φ. repeat split; unfold Φ.
+  pose (Φ := ϕ[up (num 0)..]).
+  exists Φ. split; unfold Φ.
   { eapply subst_bound; eauto.
-    intros [|[]]; solve_bounds. }
-  { now apply subst_sigma1. }
-  all: intros x; specialize (H x); rewrite up_switch.
+    intros [|[|[]]]; cbn. 1,2,3: try solve_bounds. lia. }
+  split.
+  { constructor. now apply delta0_subst. }
+  repeat split.
+  all: intros x; specialize (H x).
   all: eapply AllE with (t := num 0) in H; cbn -[Q] in H.
   all: apply prv_split in H; destruct H as [H1 H2].
   - intros px%Hf. symmetry in px.
     eapply num_eq with (Gamma := Q)(p := intu) in px; [|firstorder].
-    eapply IE. apply H2. now rewrite num_subst.
+    eapply IE. cbn -[Q num]. rewrite up_switch.
+    apply H2. now rewrite num_subst.
   - intros npx. assert (0 <> f x) as E by firstorder.
     apply num_neq with (Gamma := Q)(p := intu) in E; [|firstorder].
     apply II. eapply IE.
     {eapply Weak; [apply E|now right]. }
     eapply IE; [|apply Ctx; now left].
-    rewrite num_subst in H1. eapply Weak; [apply H1|now right].
+    rewrite num_subst in H1. eapply Weak.
+    + cbn -[Q num]. rewrite up_switch. apply H1.
+    + now right.
 Qed.
 
 
@@ -91,23 +93,28 @@ Proof.
   intros wct p Dec_p.
   destruct (Dec_decider_nat _ Dec_p) as [f Hf]. 
   apply (DN_chaining (wct f)), DN. intros [ϕ [b2 [[s1] H]]].
-  pose (Φ := ϕ[(num 0)..]).
-  exists Φ. repeat split; unfold Φ.
-  { eapply subst_bound; eauto. 
-    intros [|[]]; solve_bounds. }
-  { now apply subst_sigma1. }
-  all: intros x; specialize (H x); rewrite up_switch.
+  pose (Φ := ϕ[up (num 0)..]).
+  exists Φ. split; unfold Φ.
+  { eapply subst_bound; eauto.
+    intros [|[|[]]]; cbn. 1,2,3: try solve_bounds. lia. }
+  split.
+  { constructor. now apply delta0_subst. }
+  repeat split.
+  all: intros x; specialize (H x).
   all: eapply AllE with (t := num 0) in H; cbn -[Q] in H.
   all: apply prv_split in H; destruct H as [H1 H2].
   - intros px%Hf. symmetry in px.
     eapply num_eq with (Gamma := Q)(p := intu) in px; [|firstorder].
-    eapply IE. apply H2. now rewrite num_subst.
+    eapply IE. cbn -[Q num]. rewrite up_switch.
+    apply H2. now rewrite num_subst.
   - intros npx. assert (0 <> f x) as E by firstorder.
     apply num_neq with (Gamma := Q)(p := intu) in E; [|firstorder].
     apply II. eapply IE.
     {eapply Weak; [apply E|now right]. }
     eapply IE; [|apply Ctx; now left].
-    rewrite num_subst in H1. eapply Weak; [apply H1|now right].
+    rewrite num_subst in H1. eapply Weak.
+    + cbn -[Q num]. rewrite up_switch. apply H1.
+    + now right.
 Qed.
 
 
@@ -116,46 +123,46 @@ Lemma CT_RTw :
 Proof.
   intros ct p [f Hf]%enumerable_nat.
   destruct (ct f) as [ϕ [b2 [[s1] H]]].
-  pose (Φ := ∃ ϕ[(σ $1)..] ).
+  pose (Φ := ϕ[up (σ $1)..] ).
   exists Φ; split. 2: split.
-  - solve_bounds. eapply subst_bound; eauto.
-    intros [|[]]; repeat solve_bounds.
-  - constructor. now apply Sigma_exists, subst_sigma1. 
+  - unfold Φ. eapply subst_bound; eauto.
+    intros [|[|[]]]; cbn; repeat solve_bounds.
+  - constructor. now apply delta0_subst. 
   - intros x. rewrite Hf. split.
     + intros [n Hn]. symmetry in Hn.
-      fold Φ.
-      eapply (@sigma1_complete Φ _ 1) with (rho := fun _ => 0).
-      { solve_bounds. eapply subst_bound; eauto.
-        intros [|[]]; repeat solve_bounds. }
-      { intros [] ?; [apply closed_num|lia]. } 
+      apply Σ1_ternary_complete.
+      { unfold Φ. eapply subst_bound; eauto.
+      intros [|[|[]]]; cbn; repeat solve_bounds. }
+      {unfold Φ. now apply delta0_subst. }
       exists n. specialize (H n).
       apply soundness in H.
       unshelve refine (let H := (H nat interp_nat (fun _ => 0)) _ in _ ).
-      apply Q_std_axioms.
+      {apply Q_std_axioms. }
       cbn in H. specialize (H (S x)) as [_ H2].
       rewrite eval_num, inu_nat_id in *.
-      apply H2 in Hn.
-      rewrite !sat_comp in *.
-      eapply bound_ext.
-      apply b2. 2: apply Hn.
-      intros [|[]]; cbn; rewrite ?num_subst, ?eval_num, ?inu_nat_id in *.
+      apply H2 in Hn. destruct Hn as [d Hd].
+      exists d.
+      unfold Φ. rewrite !sat_comp in *.
+      eapply bound_ext with (N:=3).
+      apply b2. 2: apply Hd.
+      intros [|[|[]]]; cbn; rewrite ?num_subst, ?eval_num, ?inu_nat_id in *.
       all: try lia; reflexivity.
     + intros HQ%soundness. specialize (HQ nat interp_nat (fun _ => 0)).
-      destruct HQ as [n Hn].
-      apply Q_std_axioms.
+      destruct HQ as [n [d Hnd]].
+      {apply Q_std_axioms. }
       exists n. specialize (H n).
       apply soundness in H.
       unshelve refine (let H := (H nat interp_nat (fun _ => 0)) _ in _ ).
       apply Q_std_axioms.
       cbn in H. specialize (H (S x)) as [H1 _].
       rewrite eval_num, inu_nat_id in *.
-      symmetry. apply H1.
-      rewrite !sat_comp in Hn. rewrite sat_comp.
+      symmetry. apply H1. exists d.
+      rewrite !sat_comp in Hnd. 
+      unfold Φ in Hnd. rewrite sat_comp in *.
       eapply bound_ext.
-      apply b2. 2: apply Hn.
-      intros [|[]]; cbn; rewrite ?num_subst, ?eval_num, ?inu_nat_id in *.
+      apply b2. 2: apply Hnd.
+      intros [|[|[]]]; cbn; rewrite ?num_subst, ?eval_num, ?inu_nat_id in *.
       all: try lia; reflexivity.
-    Unshelve. now apply Sigma_exists, subst_sigma1.
 Qed.
 
 
@@ -163,47 +170,48 @@ Lemma WCT_WRTw :
   WCT_Q -> WRT_weak.
 Proof.
   intros wct p [f Hf]%enumerable_nat.
-  apply (DN_chaining (wct f)), DN. intros [ϕ [b2 [[s1] H]]].
-  pose (Φ := ∃ ϕ[(σ $1)..] ).
+  apply (DN_chaining (wct f)), DN.
+  intros [ϕ [b2 [[s1] H]]].
+  pose (Φ := ϕ[up (σ $1)..] ).
   exists Φ; split. 2: split.
-  - solve_bounds. eapply subst_bound; eauto.
-    intros [|[]]; repeat solve_bounds.
-  - constructor. now apply Sigma_exists, subst_sigma1. 
+  - unfold Φ. eapply subst_bound; eauto.
+    intros [|[|[]]]; cbn; repeat solve_bounds.
+  - constructor. now apply delta0_subst. 
   - intros x. rewrite Hf. split.
     + intros [n Hn]. symmetry in Hn.
-      fold Φ.
-      eapply (@sigma1_complete Φ _ 1) with (rho := fun _ => 0).
-      { solve_bounds. eapply subst_bound; eauto.
-        intros [|[]]; repeat solve_bounds. }
-      { intros [] ?; [apply closed_num|lia]. } 
+      apply Σ1_ternary_complete.
+      { unfold Φ. eapply subst_bound; eauto.
+      intros [|[|[]]]; cbn; repeat solve_bounds. }
+      {unfold Φ. now apply delta0_subst. }
       exists n. specialize (H n).
       apply soundness in H.
       unshelve refine (let H := (H nat interp_nat (fun _ => 0)) _ in _ ).
-      apply Q_std_axioms.
+      {apply Q_std_axioms. }
       cbn in H. specialize (H (S x)) as [_ H2].
       rewrite eval_num, inu_nat_id in *.
-      apply H2 in Hn.
-      rewrite !sat_comp in *.
-      eapply bound_ext.
-      apply b2. 2: apply Hn.
-      intros [|[]]; cbn; rewrite ?num_subst, ?eval_num, ?inu_nat_id in *.
+      apply H2 in Hn. destruct Hn as [d Hd].
+      exists d.
+      unfold Φ. rewrite !sat_comp in *.
+      eapply bound_ext with (N:=3).
+      apply b2. 2: apply Hd.
+      intros [|[|[]]]; cbn; rewrite ?num_subst, ?eval_num, ?inu_nat_id in *.
       all: try lia; reflexivity.
     + intros HQ%soundness. specialize (HQ nat interp_nat (fun _ => 0)).
-      destruct HQ as [n Hn].
-      apply Q_std_axioms.
+      destruct HQ as [n [d Hnd]].
+      {apply Q_std_axioms. }
       exists n. specialize (H n).
       apply soundness in H.
       unshelve refine (let H := (H nat interp_nat (fun _ => 0)) _ in _ ).
       apply Q_std_axioms.
       cbn in H. specialize (H (S x)) as [H1 _].
       rewrite eval_num, inu_nat_id in *.
-      symmetry. apply H1.
-      rewrite !sat_comp in Hn. rewrite sat_comp.
+      symmetry. apply H1. exists d.
+      rewrite !sat_comp in Hnd. 
+      unfold Φ in Hnd. rewrite sat_comp in *.
       eapply bound_ext.
-      apply b2. 2: apply Hn.
-      intros [|[]]; cbn; rewrite ?num_subst, ?eval_num, ?inu_nat_id in *.
+      apply b2. 2: apply Hnd.
+      intros [|[|[]]]; cbn; rewrite ?num_subst, ?eval_num, ?inu_nat_id in *.
       all: try lia; reflexivity.
-    Unshelve. now apply Sigma_exists, subst_sigma1. 
 Qed.
 
 

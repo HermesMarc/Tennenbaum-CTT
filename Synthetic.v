@@ -5,6 +5,9 @@ Require Import ConstructiveEpsilon.
 Definition iffT (X Y : Type) : Type := (X -> Y) * (Y -> X).
 Notation "X <=> Y" := (iffT X Y) (at level 95, no associativity).
 
+Definition surj {X Y} (f : X -> Y) := forall y, exists x, f x = y.
+Definition inj {X Y} (f : X -> Y) := forall x x', f x = f x' -> x = x'.
+Definition bij {X Y} (f : X -> Y) := inj f /\ surj f.
 
 Definition definite P := P \/ ~P.
 Definition Definite {X} p := forall x : X, definite (p x).
@@ -13,7 +16,7 @@ Definition stable P := ~~P -> P.
 Definition Stable {X} p := forall x : X, stable (p x).
 Definition DNE := forall P, stable P.
 Definition MP := forall (f : nat -> nat), stable (exists n, f n = 0).
-
+Definition UC X Y := forall R, (forall x:X, exists! y:Y, R x y) -> exists f, forall x, R x (f x).
 
 Fact LEM_DNE :
   (LEM <-> DNE) /\ (DNE -> MP).
@@ -25,7 +28,7 @@ Proof.
 Qed.
 
 
-Fact DN_remove {A B} : 
+Fact DN_remove {A B} :
   ~~A -> (A -> ~B) -> ~B.
 Proof. tauto. Qed.
 
@@ -57,7 +60,7 @@ Definition enumerable {X} p := exists f : nat -> option X, forall x, p x <-> exi
 Definition convering X Y (f :  X -> option Y) := forall y, exists x, f x = Some y.
 Definition covers X Y := sigT (convering X Y). 
 Definition quasi_convering X Y (f :  X -> option Y) := forall y, ~~ exists x, f x = Some y.
-Definition  quasi_covers X Y := ex (quasi_convering X Y).
+Definition quasi_covers X Y := ex (quasi_convering X Y).
 
 Definition Enumerable X := exists f : nat -> option X, forall x, exists n, f n = Some x.
 Definition Discrete X := Dec (fun p : X * X => fst p = snd p).
@@ -208,11 +211,3 @@ Proof.
   - destruct H as [x' ], (Hg x') as [x Hx].
     exists x. now rewrite Hx.
 Qed.
-
-
-Fact Markov_quasi_covers {X Y} :
-  Markov X -> quasi_covers X Y -> Discrete Y -> Markov Y.
-Proof.
-Admitted.
-
-
