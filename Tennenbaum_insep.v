@@ -143,9 +143,8 @@ Section Model.
   Proof.
     intros d0 b3.
     intros rho. cbn. intros ???.
-    specialize (delta0_HA phi var d0) as d0'.
+    specialize (delta0_HA phi d0) as d0'.
     refine (let H := tsoundness d0' _  in _).
-    rewrite subst_var in H.
     apply H. intros ??.
     now apply axioms.
   Qed.

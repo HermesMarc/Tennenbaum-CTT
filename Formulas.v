@@ -50,7 +50,7 @@ Class Delta0 : Type :=
   mk_Delta0{ 
     delta0 : form -> Prop
   ; delta0_Q : forall ϕ s, delta0 ϕ -> bounded 0 (ϕ[s]) -> {Q ⊢I ϕ[s]} + {Q ⊢I ¬ ϕ[s]}
-  ; delta0_HA : forall ϕ s, delta0 ϕ -> PA ⊢TI ϕ[s] ∨ ¬ ϕ[s]
+  ; delta0_HA : forall ϕ, delta0 ϕ -> PA ⊢TI ϕ ∨ ¬ ϕ
   ; delta0_subst : forall ϕ s, delta0 ϕ -> delta0 (ϕ[s])
   }.
 

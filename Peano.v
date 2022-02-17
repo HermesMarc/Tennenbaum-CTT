@@ -1458,9 +1458,13 @@ End Q_prv.
 Definition std {D I} d := exists n, @inu D I n = d.
 Definition stdModel D {I} := forall d, exists n, (@inu D I) n = d.
 Definition nonStd D {I} := exists e, ~ @std D I e.
+Definition notStd D {I} := ~ @stdModel D I.
 
 Fact nonStd_notStd {D I} :
   @nonStd D I -> ~ stdModel D.
 Proof.
   intros [e He] H; apply He, H.
 Qed.
+
+
+
