@@ -56,7 +56,7 @@ Proof.
 Qed.
 
 
-Lemma CT_RTs : 
+Lemma CT_RTs :
   CT_Q -> RT_strong.
 Proof.
   intros ct p Dec_p.

@@ -12,16 +12,6 @@ Notation "x ∣ y" := (exists k, x * k = y) (at level 50).
 Definition unary alpha := bounded 1 alpha.
 Definition binary alpha := bounded 2 alpha.
 
-Definition std {D I} d := exists n, @inu D I n = d.
-Definition stdModel D {I} := forall d, exists n, (@inu D I) n = d.
-Definition nonStd D {I} := exists e, ~ @std D I e.
-
-Fact nonStd_notStd {D I} :
-  @nonStd D I -> ~ stdModel D.
-Proof.
-  intros [e He] H; apply He, H.
-Qed.
-
 
 Section Model.
 
@@ -116,7 +106,8 @@ Qed.
 
 
 
-Lemma lt_equiv x y : x < y <-> inu x i⧀ inu y.
+Lemma lt_equiv x y : 
+  x < y <-> inu x i⧀ inu y.
 Proof.
   assert (x < y <-> exists k, S x + k = y) as H.
   split.
@@ -137,7 +128,8 @@ Proof.
         [now rewrite add_rec, Hk | apply axioms | apply axioms].
 Qed.
 
-Lemma num_lt_nonStd n d : ~ std d -> inu n i⧀ d.
+Lemma num_lt_nonStd n d : 
+  ~ std d -> inu n i⧀ d.
 Proof.
   intros nonStd.
   destruct (@trichotomy D I axioms (inu n) d) as [H|[<-|H]]; auto.
