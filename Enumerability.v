@@ -1,4 +1,4 @@
-Require Import Synthetic.
+Require Import Synthetic Dec.
 Require Export List Lia.
 Export List.ListNotations.
 
@@ -10,15 +10,16 @@ Module ListAutomationNotations.
   Notation "( A × B × .. × C )" := (list_prod .. (list_prod A B) .. C) (at level 0, left associativity).
 
   Notation "[ s | p ∈ A ',' P ]" :=
-    (map (fun p => s) (filter (fun p => dec P) A)) (p pattern).
+    (map (fun p => s) (filter (fun p => if Dec P then true else false) A)) (p pattern).
   Notation "[ s | p ∈ A ]" :=
     (map (fun p => s) A) (p pattern).
 
 End ListAutomationNotations.
 Import ListAutomationNotations.
 
-Require Import FOL Peano Deduction DecidabilityFacts ListEnumerabilityFacts CantorPairing.
+Require Import FOL Peano Deduction DecidabilityFacts ListEnumerabilityFacts CantorPairing Tarski.
 Require Import Equations.Equations.
+Require Import EqdepFacts.
 
 Lemma in_filter_iff X x p (A : list X) :
   x el filter p A <-> x el A /\ p x = true.
@@ -29,8 +30,21 @@ Proof.
       rewrite IHA; intuition; subst; auto. congruence.
 Qed.
 
+Lemma in_concat_iff A l (a:A) : a el concat l <-> exists l', a el l' /\ l' el l.
+Proof.
+  induction l; cbn.
+  - intuition. now destruct H. 
+  - rewrite in_app_iff, IHl. clear. firstorder subst. auto.
+Qed.
+
 Ltac in_collect a :=
-  eapply in_map_iff; exists a; split; [ eauto | match goal with [ |- In _ (filter _ _) ] =>  eapply in_filter_iff; split; [ try (rewrite !in_prod_iff; repeat split) | ] | _ => try (rewrite !in_prod_iff; repeat split) end ].
+  eapply in_map_iff; exists a; split; [ eauto | match goal with [ |- In _ (filter _ _) ] =>  eapply in_filter_iff; split; [ try (rewrite !in_prod_iff; repeat split) | eapply Dec_auto; repeat split; eauto ] | _ => try (rewrite !in_prod_iff; repeat split) end ].
+
+Lemma to_dec (P : Prop) `{Dec.dec P} :
+  P <-> is_true (Dec P).
+Proof.
+  split; destruct (Dec P); cbn in *; firstorder congruence.
+Qed.
 
 Ltac resolve_existT := try
   match goal with
@@ -48,20 +62,6 @@ Ltac in_app n :=
     end
   | [ |- In _ (_ :: _) ] => match n with 0 => idtac | 1 => left | S ?n => right; in_app n end
   end) || (repeat (try right; eapply in_app_iff; right)).
-
-Lemma in_concat_iff A l (a:A) : a el concat l <-> exists l', a el l' /\ l' el l.
-Proof.
-  induction l; cbn.
-  - intuition. now destruct H. 
-  - rewrite in_app_iff, IHl. clear. firstorder subst. auto.
-Qed.
-
-Lemma list_enumerator_enumerable X L :
-  list_enumerator__T L X -> enumerable__T X.
-Proof.
-  intros H. exists (fun n => let (n, m) := decode n in nth_error (L n) m).
-  intros x. rewrite list_enumerator_to_enumerator. apply H.
-Qed.
 
 Section Enumerability.
   
@@ -148,12 +148,6 @@ Section Enumerability.
       apply in_map. rewrite <- vecs_from_correct in H |-*. intros x H''. specialize (H x H'')...
   Qed.
 
-  Lemma enumT_term :
-    enumerable__T term.
-  Proof.
-    eapply list_enumerator_enumerable. apply enum_term.
-  Qed.
-
   Fixpoint L_form {ff : falsity_flag} n : list form :=
     match n with
     | 0 => match ff with falsity_on => [falsity] | falsity_off => [] end
@@ -186,13 +180,248 @@ Section Enumerability.
       in_app 5. apply in_concat. eexists. split. apply in_map... in_collect phi...
   Qed.
 
-  Lemma enumT_form :
-    enumerable__T form.
+End Enumerability.
+
+Definition L_term' :
+  nat -> list term.
+Proof.
+  apply L_term. exact (fun _ => [Zero; Succ; Plus; Mult]).
+Defined.
+
+Lemma enum_term' :
+  list_enumerator__T L_term' term.
+Proof.
+  apply enum_term.
+  - intros []; exists 0; cbn; tauto.
+  - intros n. exists nil. auto.
+Qed.
+
+Definition L_form' {ff : falsity_flag} :
+  nat -> list form.
+Proof.
+  apply L_form.
+  - exact (fun _ => [Zero; Succ; Plus; Mult]).
+  - exact (fun _ => []).
+  - exact (fun _ => [Conj; Disj; Impl]).
+  - exact (fun _ => [All; Ex]).
+Defined.
+
+Lemma enum_form' {ff : falsity_flag} :
+  list_enumerator__T L_form' form.
+Proof.
+  apply enum_form.
+  1,3,5,7: intros []; exists 0; cbn; tauto.
+  all: intros n; exists nil; auto.
+Qed.
+
+Lemma list_enumerator_enumerator__T X L :
+  list_enumerator__T L X -> { f | forall x : X, exists n : nat, f n = Some x }.
+Proof.
+  intros H. exists (fun n => let (n, m) := decode n in nth_error (L n) m).
+  intros x. rewrite list_enumerator_to_enumerator. apply H.
+Qed.
+
+Theorem surj_form_ :
+  { Φ : nat -> form & surj Φ }.
+Proof.
+  edestruct list_enumerator_enumerator__T as [e He].
+  - apply enum_form'.
+  - exists (fun n => match e n with Some phi => phi | None => ⊥ end).
+    intros phi. destruct (He phi) as [n Hn]. exists n. now rewrite Hn.
+Qed.
+
+Lemma dec_vec_in X n (v : vec X n) :
+  (forall x, vec_in x v -> forall y, Dec.dec (x = y)) -> forall v', Dec.dec (v = v').
+Proof with subst; try (now left + (right; intros[=])).
+  intros Hv. induction v; intros v'; dependent elimination v'...
+  destruct (Hv h (vec_inB h v) h0)... edestruct IHv.
+  - intros x H. apply Hv. now right.
+  - left. f_equal. apply e.
+  - right. intros H. inversion H. resolve_existT. tauto.
+Qed.
+
+Instance dec_vec X {HX : eq_dec X} n : eq_dec (vec X n).
+Proof.
+  intros v. refine (dec_vec_in _ _ _ _).
+Qed.
+
+Section EqDec.
+  
+  Context {Σ_funcs : funcs_signature}.
+  Context {Σ_preds : preds_signature}.
+  Context {ops : operators}.
+
+  Hypothesis eq_dec_Funcs : eq_dec syms.
+  Hypothesis eq_dec_Preds : eq_dec preds.
+  Hypothesis eq_dec_binop : eq_dec binop.
+  Hypothesis eq_dec_quantop : eq_dec quantop.
+
+  Instance dec_term : eq_dec term.
+  Proof with subst; try (now left + (right; intros[=]; resolve_existT; congruence)).
+    intros t. induction t as [ | ]; intros [|? v']...
+    - decide (x = n)... 
+    - decide (F = f)... destruct (dec_vec_in _ _ _ X v')...
+  Qed.
+
+  Instance dec_falsity : eq_dec falsity_flag.
   Proof.
-    eapply list_enumerator_enumerable. apply enum_form.
+    intros b b'. unfold Dec.dec. decide equality.
+  Qed.
+
+  Lemma eq_dep_falsity b phi psi :
+    eq_dep falsity_flag (@form Σ_funcs Σ_preds ops) b phi b psi <-> phi = psi.
+  Proof.
+    rewrite <- eq_sigT_iff_eq_dep. split.
+    - intros H. resolve_existT. reflexivity.
+    - intros ->. reflexivity.
+  Qed.
+
+  Lemma dec_form_dep {b1 b2} phi1 phi2 : dec (eq_dep falsity_flag (@form _ _ _) b1 phi1 b2 phi2).
+  Proof with subst; try (now left + (right; intros ? % eq_sigT_iff_eq_dep; resolve_existT; congruence)).
+    unfold dec. revert phi2; induction phi1; intros; try destruct phi2.
+    all: try now right; inversion 1. now left.
+    - decide (b = b0)... decide (P = P0)... decide (v = v0)... right.
+      intros [=] % eq_dep_falsity. resolve_existT. tauto.
+    - decide (b = b1)... decide (b0 = b2)... destruct (IHphi1_1 phi2_1).
+      + apply eq_dep_falsity in e as ->. destruct (IHphi1_2 phi2_2).
+        * apply eq_dep_falsity in e as ->. now left.
+        * right. rewrite eq_dep_falsity in *. intros [=]. now resolve_existT.
+      + right. rewrite eq_dep_falsity in *. intros [=]. now repeat resolve_existT.
+    - decide (b = b0)... decide (t = t1)... decide (t0 = t2)...
+    - decide (b = b0)... decide (q = q0)... destruct (IHphi1 phi2).
+      + apply eq_dep_falsity in e as ->. now left.
+      + right. rewrite eq_dep_falsity in *. intros [=]. now resolve_existT.
+  Qed.
+
+  Lemma dec_form {ff : falsity_flag} : eq_dec form.
+  Proof.
+    intros phi psi. destruct (dec_form_dep phi psi); rewrite eq_dep_falsity in *; firstorder.
+  Qed.
+
+End EqDec.
+
+Instance dec_form' {b : falsity_flag} :
+  eq_dec form.
+Proof.
+  apply dec_form; intros x y; unfold Dec.dec; decide equality.
+Qed.
+
+Instance list_in_dec X x (A : list X) :
+  eq_dec X -> Dec.dec (x el A).
+Proof.
+  intros d. induction A; cbn.
+  - now right.
+  - destruct IHA, (d a x); firstorder.
+Qed.
+
+Section Enumerability.
+
+  Fixpoint L_ded {p : peirce} {b : falsity_flag} (A : list form) (n : nat) : list form :=
+    match n with
+    | 0 => A
+    | S n =>   L_ded A n ++
+    (* II *)   concat ([ [ phi --> psi | psi ∈ L_ded (phi :: A) n ] | phi ∈ L_form' n ]) ++
+    (* IE *)   [ psi | (phi, psi) ∈ (L_ded A n × L_form' n) , (phi --> psi el L_ded A n) ] ++
+    (* AllI *) [ ∀ phi | phi ∈ L_ded (map (subst_form ↑) A) n ] ++
+    (* AllE *) [ phi[t..] | (phi, t) ∈ (L_form' n × L_term' n), (∀ phi) el L_ded A n ] ++
+    (* ExI *)  [ ∃ phi | (phi, t) ∈ (L_form' n × L_term' n), (phi[t..]) el L_ded A n ] ++
+    (* ExE *)  [ psi | (phi, psi) ∈ (L_form' n × L_form' n),
+                     (∃ phi) el L_ded A n /\ psi[↑] el L_ded (phi::(map (subst_form ↑) A)) n ] ++
+    (* Exp *)  (match b with falsity_on => fun A =>
+                [ phi | phi ∈ L_form' n, ⊥ el @L_ded p falsity_on A n ]
+                | _ => fun _ => nil end A) ++
+    (* Pc *)   (if p then
+                [ (((phi --> psi) --> phi) --> phi) | (pair phi psi) ∈ (L_form' n × L_form' n)]
+                else nil) ++
+    (* CI *)   [ phi ∧ psi | (phi, psi) ∈ (L_ded A n × L_ded A n) ] ++
+    (* CE1 *)  [ phi | (phi, psi) ∈ (L_form' n × L_form' n), phi ∧ psi el L_ded A n] ++
+    (* CE2 *)  [ psi | (phi, psi) ∈ (L_form' n × L_form' n), phi ∧ psi el L_ded A n] ++
+    (* DI1 *)  [ phi ∨ psi | (phi, psi) ∈ (L_form' n × L_form' n), phi el L_ded A n] ++
+    (* DI2 *)  [ phi ∨ psi | (phi, psi) ∈ (L_form' n × L_form' n), psi el L_ded A n] ++
+    (* DE *)   [ theta | (phi, (psi, theta)) ∈ (L_form' n × (L_form' n × L_form' n)),
+                     theta el L_ded (phi::A) n /\ theta el L_ded (psi::A) n /\ phi ∨ psi el L_ded A n]
+    end.
+
+  Ltac inv_collect :=
+    progress repeat (match goal with
+     | [ H : ?x el concat _ |- _ ] => eapply in_concat_iff in H as (? & ? & ?)
+     | [ H : ?x el map _ _ |- _ ] => let x := fresh "x" in eapply in_map_iff in H as (x & ? & ?)
+     | [ x : ?A * ?B |- _ ] => destruct x; subst
+     | [ H : ?x el filter _ _ |- _ ] => let H' := fresh "H" in eapply in_filter_iff in H as (? & H' % to_dec)
+     | [ H : ?x el list_prod _ _ |- _ ] => eapply in_prod_iff in H
+     | [ H : _ el _ ++ _ |- _ ] => try eapply in_app_iff in H as []
+     | [ H : _ el _ :: _ |- _ ] => destruct H
+     end; intuition; subst).
+
+  Lemma enum_prv {p : peirce} {b : falsity_flag} A :
+    list_enumerator (L_ded A) (prv A).
+  Proof with try (eapply cum_ge'; eauto; lia).
+    split.
+    - rename x into phi. induction 1; try congruence; subst.
+      + destruct IHprv as [m1], (enum_form' phi) as [m2]. exists (1 + m1 + m2). cbn. in_app 2.
+        eapply in_concat_iff. eexists. split. 2:in_collect phi... in_collect psi...
+      + destruct IHprv1 as [m1], IHprv2 as [m2], (enum_form' psi) as [m3]; eauto.
+        exists (1 + m1 + m2 + m3).
+        cbn. in_app 3. in_collect (phi, psi)...
+      + destruct IHprv as [m]. exists (1 + m). cbn. in_app 4. in_collect phi...
+      + destruct IHprv as [m1], (enum_term' t) as [m2], (enum_form' phi) as [m3]. exists (1 + m1 + m2 + m3).
+        cbn. in_app 5. in_collect (phi, t)...
+      + destruct IHprv as [m1], (enum_term' t) as [m2], (enum_form' phi) as [m3]. exists (1 + m1 + m2 + m3).
+        cbn. in_app 6. in_collect (phi, t)...
+      + destruct IHprv1 as [m1], IHprv2 as [m2], (enum_form' phi) as [m4], (enum_form' psi) as [m5].
+        exists (1 + m1 + m2 + m4 + m5). cbn. in_app 7. cbn. in_collect (phi, psi)...
+      + destruct IHprv as [m1], (enum_form' phi) as [m2]. exists (1 + m1 + m2). cbn. in_app 8. in_collect phi...
+      + now exists 0.
+      + destruct IHprv1 as [m1], IHprv2 as [m2]. exists (1 + m1 + m2). cbn. in_app 10. in_collect (phi, psi)...
+      + destruct IHprv as [m1], (enum_form' phi) as [m2], (enum_form' psi) as [m3].
+        exists (1 + m1 + m2 + m3). cbn. in_app 11. in_collect (phi, psi)...
+      + destruct IHprv as [m1], (enum_form' phi) as [m2], (enum_form' psi) as [m3].
+        exists (1 + m1 + m2 + m3). cbn. in_app 12. in_collect (phi, psi)...
+      + destruct IHprv as [m1], (enum_form' phi) as [m2], (enum_form' psi) as [m3].
+        exists (1 + m1 + m2 + m3). cbn. in_app 13. in_collect (phi, psi)...
+      + destruct IHprv as [m1], (enum_form' phi) as [m2], (enum_form' psi) as [m3].
+        exists (1 + m1 + m2 + m3). cbn. in_app 14. in_collect (phi, psi)...
+      + destruct IHprv1 as [m1], IHprv2 as [m2], IHprv3 as [m3], (enum_form' phi) as [m4], (enum_form' psi) as [m5], (enum_form' theta) as [m6].
+        exists (1 + m1 + m2 + m3 + m4 + m5 + m6). cbn. in_app 15. cbn. in_collect (phi, (psi, theta))...
+      + destruct (enum_form' phi) as [m1], (enum_form' psi) as [m2]. exists (1 + m1 + m2). cbn. in_app 9. in_collect (phi, psi)...
+    - intros [m]; induction m in A, x, H |-*; cbn in *.
+      + now apply Ctx.
+      + destruct p, b; inv_collect. all: eauto 3; try now destruct H.
+        * eapply IE; apply IHm; eauto.
+        * eapply ExE; apply IHm; eauto.
+        * eapply DE; apply IHm; eauto.
+        * eapply IE; apply IHm; eauto.
+        * eapply ExE; apply IHm; eauto.
+        * eapply DE; apply IHm; eauto.
+        * eapply IE; apply IHm; eauto.
+        * eapply ExE; apply IHm; eauto.
+        * eapply DE; apply IHm; eauto.
+        * eapply IE; apply IHm; eauto.
+        * eapply ExE; apply IHm; eauto.
+        * eapply DE; apply IHm; eauto.
   Qed.
 
 End Enumerability.
 
-(*Variable surj_form_ : { Φ : nat -> form & surj Φ }.
-Variable enumerable_Q_prv : forall Φ : nat -> form, enumerable (fun n => Q ⊢I (Φ n)).*)
+Lemma list_enumerator_enumerator X (p : X -> Prop) L :
+  list_enumerator L p -> { f | forall x : X, p x <-> exists n : nat, f n = Some x }.
+Proof.
+  intros H. exists (fun n => let (n, m) := decode n in nth_error (L n) m).
+  intros x. rewrite list_enumerator_to_enumerator. apply H.
+Qed.
+
+Theorem enumerable_Q_prv (Φ : nat -> form) :
+  enumerable (fun n => Q ⊢I (Φ n)).
+Proof.
+  edestruct list_enumerator_enumerator as [e He].
+  - unshelve eapply enum_prv.
+    + exact intu.
+    + exact Q.
+  - exists (fun n => let (n, k) := decode n in match e n with Some psi => if Dec (psi = Φ k) then Some k else None | _ => None end).
+    intros k. split; intros H.
+    + apply He in H as [n Hn]. exists (code (n, k)). rewrite inv_dc, Hn. now destruct Dec.
+    + destruct H as [n H]. destruct (decode n) as [n' k']. destruct (e n') as [psi |] eqn : Hn.
+      * destruct Dec; try congruence. apply He. exists n'. congruence.
+      * congruence.
+Qed.
+  
