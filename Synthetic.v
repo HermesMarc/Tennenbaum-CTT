@@ -204,6 +204,22 @@ Proof.
 Qed.
 
 
+Lemma UC_Def_Dec X (p : X -> Prop) :
+  UC X bool -> Definite p -> Dec p.
+Proof.
+  intros uc Def. apply Dec_decider.
+  refine (uc (fun x y => p x <-> y = true) _).
+  intros n. destruct (Def n) as [h|h].
+  - exists true; split; [tauto|]. 
+    intros []; try congruence.
+    intros H. now rewrite H in h.
+  - exists false; split.
+    + split; try tauto; congruence.
+    + intros []; try congruence.
+    intros H. now rewrite H in h.
+Qed.
+
+
 Fact MP_Dec_stable :
   MP -> forall (p : nat -> Prop), Dec p -> stable (ex p).
 Proof.

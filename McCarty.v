@@ -161,20 +161,6 @@ Section Model.
           intros [|[]]; solve_bounds.
   Qed.
 
-  Lemma UC_Def_Dec X (p : X -> Prop) :
-    UC X bool -> Definite p -> Dec p.
-  Proof.
-    intros uc Def. apply Dec_decider.
-    refine (uc (fun x y => p x <-> y = true) _).
-    intros n. destruct (Def n) as [h|h].
-    - exists true; split; [tauto|]. 
-      intros []; try congruence.
-      intros H. now rewrite H in h.
-    - exists false; split.
-      + split; try tauto; congruence.
-      + intros []; try congruence.
-        intros H. now rewrite H in h.
-  Qed.
 
   Definition div_num n (d : D) := exists e, inu n i⊗ e = d.
   Definition Div_nat (d : D) := fun n => div_num n d.

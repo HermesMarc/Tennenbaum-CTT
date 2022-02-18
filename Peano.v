@@ -1113,23 +1113,6 @@ Section Q_prv.
       apply eq_add. apply reflexivity. apply IHx.
   Qed.
 
-
-  Lemma num_lt_prv x y : 
-    x < y <-> Gamma ⊢ (num x ⧀ num y).
-  Proof.
-    split.
-    - intros H.
-      change (Gamma ⊢ exist_times 1 ( (num y)`[↑] == σ ((num x)`[↑] ⊕ $0))).
-      specialize H as [k <-]%lt_nat_equiv.
-      pose (sigma := [num x ; num k] ∗ var).
-      eapply subst_exist_prv with (sigma := sigma).
-      cbn. rewrite !num_subst.
-      apply eq_succ, symmetry.
-      apply num_add_homomorphism.
-      solve_bounds.
-  Abort.
-
-
 End Q_prv.
 
 
@@ -1139,20 +1122,6 @@ Section Q_prv.
 
   Variable Gamma : list form.
   Variable G : incl Q Gamma.
-
-
-  Lemma better_leibniz sigma phi rho A : 
-    (forall n, A ⊢ (sigma n == rho n)) -> A ⊢ phi[sigma] -> A ⊢ phi[rho].
-  Proof.
-    induction phi.
-    - now cbn.
-    - destruct P.
-    - destruct b0; intros Eq H; cbn in *.
-      + apply CI; eauto.
-      + eapply DE; [apply H|apply DI1|apply DI2].
-        * eapply IHphi1; auto.
-  Abort.
-
 
   Derive Signature for Vector.t.
   
@@ -1445,7 +1414,7 @@ Section Q_prv.
       apply reflexivity. now right; right; apply G.
       apply symmetry. now right; right; apply G.
       apply Ctx; now left.
-  Abort.
+  Qed.
 
 
 End Q_prv.
@@ -1461,3 +1430,38 @@ Fact nonStd_notStd {D I} :
 Proof.
   intros [e He] H; apply He, H.
 Qed.
+
+Notation "⊨ phi" := (forall rho, rho ⊨ phi) (at level 21).
+
+Section stdModel.
+
+  Variable D : Type.
+  Variable I : interp D.
+  Variable axioms : forall ax, PA ax -> ⊨ ax.
+
+  Definition nat_hom (f : nat -> D) := 
+    f 0 = @inu D I 0
+    /\ forall n, f (S n) = iσ (f n).
+  Definition stdModel' := exists f, nat_hom f /\ bij f.
+
+  Lemma hom_agree_inu f :
+    nat_hom f -> forall x, f x = inu x.
+  Proof.
+    intros [H0 H] x. induction x as [| x IH].
+    - assumption.
+    - cbn. now rewrite H, IH.
+  Qed.
+
+  Lemma stdModel_eqiv :
+    stdModel' <-> @stdModel D I.
+  Proof.
+    split.
+    - intros (f & Hf & [inj surj]) e.
+      destruct (surj e) as [n <-].
+      exists n. now rewrite (hom_agree_inu _ Hf).
+    - intros H. exists inu. repeat split.
+      + intros ???. now eapply inu_inj.
+      + apply H.
+  Qed.
+
+End stdModel.

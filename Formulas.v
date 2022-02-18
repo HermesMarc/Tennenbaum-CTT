@@ -49,7 +49,7 @@ Qed.
 Class Delta0 : Type :=  
   mk_Delta0{ 
     delta0 : form -> Prop
-  ; delta0_Q : forall ϕ s, delta0 ϕ -> bounded 0 (ϕ[s]) -> {Q ⊢I ϕ[s]} + {Q ⊢I ¬ ϕ[s]}
+  ; delta0_Q : forall ϕ s, delta0 ϕ -> bounded 0 (ϕ[s]) -> Q ⊢I ϕ[s] \/ Q ⊢I ¬ ϕ[s]
   ; delta0_HA : forall ϕ, delta0 ϕ -> PA ⊢TI ϕ ∨ ¬ ϕ
   ; delta0_subst : forall ϕ s, delta0 ϕ -> delta0 (ϕ[s])
   }.
@@ -171,7 +171,7 @@ Section Closed.
 
 
   Theorem Q_dec_closed_delta0 :
-    {Q ⊢I phi} + {Q ⊢I ¬ phi}.
+    Q ⊢I phi \/ Q ⊢I ¬ phi.
   Proof.
     setoid_rewrite <-subst_var. cbn.
     apply delta0_Q; auto. 
@@ -188,7 +188,7 @@ Section Closed.
   Qed.
 
 
-  Corollary dec_closed_delta0: {PA ⊢TI phi} + {PA ⊢TI ¬ phi}.
+  Corollary dec_closed_delta0: PA ⊢TI phi \/ PA ⊢TI ¬ phi.
   Proof.
     destruct Q_dec_closed_delta0 as [H|H].
     - left. exists Q. split.
@@ -253,16 +253,6 @@ Section Closed.
 
 
   (** ** Δ0 Absolutness *)
-  Lemma delta0_absolutness rho : 
-    sat interp_nat rho phi -> PA⊨ phi.
-  Proof.
-    intros H. apply tsoundness.
-    destruct dec_closed_delta0 as [C|C]. assumption.
-    specialize (tsoundness C interp_nat rho) as F.
-    exfalso. apply F. apply PA_std_axioms. apply H.
-  Abort.
-
-
   Lemma delta0_absolutness' rho : 
     sat I rho phi -> PA⊨ phi.
   Proof.

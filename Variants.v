@@ -152,6 +152,17 @@ Proof.
   now intros ?%Dec_Div_nat_std.
 Qed.
 
+Corollary Makholm' :
+  (exists ψ, prime_form ψ /\ (obj_Coding ψ)) -> obj_Insep -> (forall e, ~~std e) <-> (forall d, ~~ Dec (Div_nat d)).
+Proof.
+  intros H1 H2.
+  specialize (Makholm H1 H2) as [m1 m2].
+  split.
+  - intros H d nH. destruct m2 as [e He%H]; [now exists d | auto].
+  - intros H d nH. destruct m1 as [e He%H]; [now exists d | auto].
+Qed.
+
+
 Lemma Tennenbaum3 :
   (exists ψ, prime_form ψ /\ (obj_Coding ψ)) -> obj_Insep -> (UC nat bool) -> ~ nonStd D.
 Proof.
