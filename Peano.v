@@ -165,15 +165,11 @@ Section Models.
   Notation "A ⊏ T" := (forall phi, In phi A -> phi ∈ T) (at level 70).
   Definition PAsat phi := exists A, A ⊏ PA /\ forall rho, (forall α, In α A -> rho ⊨ α) -> rho ⊨ phi.
 
-
-
   Fixpoint inu n := 
     match n with
     | 0 => i0
     | S x => iσ (inu x)
     end.
-
-
   
   Fact eval_num sigma n : 
     eval sigma (num n) = inu n.
@@ -1449,7 +1445,7 @@ Section Q_prv.
       apply reflexivity. now right; right; apply G.
       apply symmetry. now right; right; apply G.
       apply Ctx; now left.
-  Qed.
+  Abort.
 
 
 End Q_prv.

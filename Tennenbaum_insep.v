@@ -47,6 +47,8 @@ Section Model.
     eapply IE; eauto.
   Qed.
 
+  (** Recursively inseparable predicates.  *)
+
   Definition Insep' :=
     exists A B : nat -> Prop,
       enumerable A /\ enumerable B /\ 
@@ -213,6 +215,8 @@ Section Model.
         intros [|[|[]]]; solve_bounds.
   Qed.
 
+
+  (** * Potential existence of undecidable predicates. *)
 
   Lemma nonDecDiv :
     Insep -> Stable std -> nonStd D -> ~ ~ exists d : D, ~ Dec (fun n => div_pi n d).

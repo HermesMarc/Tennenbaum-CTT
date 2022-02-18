@@ -33,6 +33,8 @@ Section Model.
   Definition div_num n (d : D) := exists e, inu n i⊗ e = d.
   Definition div_pi n a :=  (inu n .: (fun _ => a)) ⊨ (∃ (ψ ∧ ∃ $1 ⊗ $0 == $3)).
 
+  (** * Enumerable and discrete PA models have decidable divisibility. *)
+
   Lemma dec_div :
     Enumerable D -> Discrete D -> Dec (fun '(n, d) => div_num n d).
   Proof.
@@ -99,6 +101,7 @@ Section Model.
     Unshelve. lia.
   Qed.
 
+  (** * Tennenbaum's Tehorem via a diagnoal argument. *)
 
   Theorem Tennenbaum_diagonal :
     RT_strong -> MP -> Enumerable D -> Discrete D -> ~ exists e, ~std e.

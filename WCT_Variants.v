@@ -3,6 +3,7 @@ Require Import FOL Peano Tarski Deduction NumberTheory Synthetic Enumerability D
 
 Notation "⊨ phi" := (forall rho, rho ⊨ phi) (at level 21).
 
+(** * Verification that all variants can be derived from WCT_Q. *)
 
 Section Variants.
 

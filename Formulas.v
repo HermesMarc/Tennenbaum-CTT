@@ -44,7 +44,7 @@ Qed.
 
 
 
-(** Define Δ0 formulas *)
+(** * Abstract definition of Δ0 formulas. *)
 
 Class Delta0 : Type :=  
   mk_Delta0{ 
@@ -110,7 +110,7 @@ Proof.
 Qed.
 
 
-(* PA and Q are consistent in Coq. *)
+(** * PA and Q are consistent in Coq. *)
 
 Lemma PA_consistent : ~ PA ⊢TI ⊥.
 Proof.
@@ -155,7 +155,7 @@ Proof.
       eapply IE. apply H1. apply H2.
 Qed.
 
-(* Results concerning closed Delta_0 Formulas *)
+(** * Results concerning Delta_0 formulas. *)
 
 Section Closed.
 
@@ -213,6 +213,7 @@ Section Closed.
   Qed.
 
 
+  (** ** Δ0 Completeness  *)
   Lemma delta0_complete rho : 
     sat interp_nat rho phi -> PA ⊢TI phi.
   Proof.
@@ -251,6 +252,7 @@ Section Closed.
   Qed.
 
 
+  (** ** Δ0 Absolutness *)
   Lemma delta0_absolutness rho : 
     sat interp_nat rho phi -> PA⊨ phi.
   Proof.
@@ -275,6 +277,8 @@ End Closed.
 
 Notation "N⊨ phi" := (forall rho, @sat _ _ nat interp_nat _ rho phi) (at level 40).
 
+
+(** * Σ1 Completeness  *)
 Section Sigma1.
 
   Variable α : form.

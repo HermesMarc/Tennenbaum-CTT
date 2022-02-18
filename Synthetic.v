@@ -9,6 +9,8 @@ Definition surj {X Y} (f : X -> Y) := forall y, exists x, f x = y.
 Definition inj {X Y} (f : X -> Y) := forall x x', f x = f x' -> x = x'.
 Definition bij {X Y} (f : X -> Y) := inj f /\ surj f.
 
+(** * Basic logical notions. *)
+
 Definition definite P := P \/ ~P.
 Definition Definite {X} p := forall x : X, definite (p x).
 Definition LEM := forall P, definite P.
@@ -27,6 +29,8 @@ Proof.
   - intros dne f. apply dne.
 Qed.
 
+
+(* Lemmas for handling double negations. *)
 
 Fact DN_remove {A B} :
   ~~A -> (A -> ~B) -> ~B.
@@ -49,6 +53,7 @@ Fact DN_forall_stable {X} p :
 Proof. unfold Stable; firstorder. Qed.
 
 
+(** * Definitions in synthetic computability.   *)
 
 Definition decider {X} p f := forall x : X, p x <-> f x = true.
 Definition Dec {X} p := inhabited(forall x : X, {p x} + {~p x}).
@@ -57,17 +62,13 @@ Definition dec (P : Prop) := {P} + {~P}.
 Definition witnessing {X} (p : X -> Prop) := ex p -> sigT p.
 Definition enumerable {X} p := exists f : nat -> option X, forall x, p x <-> exists n, f n = Some x.
 
-Definition convering X Y (f :  X -> option Y) := forall y, exists x, f x = Some y.
-Definition covers X Y := sigT (convering X Y). 
-Definition quasi_convering X Y (f :  X -> option Y) := forall y, ~~ exists x, f x = Some y.
-Definition quasi_covers X Y := ex (quasi_convering X Y).
-
 Definition Enumerable X := exists f : nat -> option X, forall x, exists n, f n = Some x.
 Definition Discrete X := Dec (fun p : X * X => fst p = snd p).
 Definition Separated X := Dec (fun p : X * X => fst p <> snd p).
 Definition Markov X := forall p : X -> Prop, Dec p -> (~~ ex p) -> ex p.
 Definition Witnessing X := forall p : X -> Prop, Dec_sigT p -> witnessing p.
 
+(** * Equivalent characterizations *)
 
 Fact Dec_decider {X} p :
   Dec p <-> ex (@decider X p).
@@ -127,6 +128,19 @@ Proof.
     apply nH. constructor. apply H.
 Qed.
 
+
+Lemma Witnessing_equiv X :
+  Witnessing X <=> forall (f : X -> bool), (exists x, f x = true) -> {x & f x = true}.
+Proof.
+  split; intros H.
+  - intros f. apply H.
+    intros x. decide equality.
+  - intros p [f Hf]%Dec_sigT_decider Ex.
+    unfold decider in *.
+    destruct (H f).
+    + destruct Ex as [x Hx]. exists x. now apply Hf.
+    + exists x. now apply Hf.
+Qed.
 
 Definition Witnessing_nat : Witnessing nat.
 Proof.
@@ -198,16 +212,4 @@ Proof.
   - apply (DN_chaining nnH), DN. intros [y Hy].
     exists y. apply Hf in Hy. now destruct (f y).
   - exists y. apply Hf. now destruct (f y).
-Qed.
-
-
-Fact Witnessing_covers {X Y} :
-  Witnessing X -> covers X Y -> Witnessing Y.
-Proof.
-  intros WO_X [g Hg] p Dec_p H.
-  enough (exists x, match g x with Some y => p y | _ => False end) as [x Gx]%WO_X.
-  - destruct (g x); now eauto.
-  - intros x. destruct (g x); auto.
-  - destruct H as [x' ], (Hg x') as [x Hx].
-    exists x. now rewrite Hx.
 Qed.

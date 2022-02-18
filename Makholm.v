@@ -31,6 +31,7 @@ Section Model.
   Hypothesis coding : obj_Coding.
 
 
+  (** * HA-inseparable formulas. *)
   Definition obj_Insep := 
     exists α β,
       binary α /\ inhabited(delta0 α) /\ binary β /\ inhabited(delta0 β) /\ 
@@ -41,6 +42,8 @@ Section Model.
 
   Definition div_num n (d : D) := exists e, inu n i⊗ e = d.
   Definition Div_nat (d : D) := fun n => div_num n d.
+
+  (** * Makholm's proof of Tennenbaum's Theorem. *)
 
   Theorem Makholm :
     obj_Insep -> nonStd D -> exists d, ~ Dec (Div_nat d).

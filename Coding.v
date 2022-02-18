@@ -25,7 +25,6 @@ Section Model.
   Notation "N⊨ phi" := (forall rho, @sat _ _ nat interp_nat _ rho phi) (at level 40).
   Notation "x 'i⧀' y" := (exists d : D, y = iσ (x i⊕ d) ) (at level 40).
 
-  (* We assume the existence of a formula which represents the prime number function *)
   Variable ψ : form.
   Variable Hψ : binary ψ /\ (forall x, Q ⊢I ∀ ψ[up (num x)..] <--> $0 == num (Irred x) ).
 
@@ -166,6 +165,8 @@ Proof.
       exists (S x). reflexivity.
 Qed.
 
+(** * Overspill *)
+
 Section Overspill.
 
   Variable alpha : form.
@@ -209,10 +210,11 @@ Section Overspill.
 
 End Overspill.
 
-
+(** * Coding Lemmas *)
 Section Coding.
 
-
+  
+  (** * In the standard model, up to some bound. *)
   Lemma Coding_nat A n :
     ~ ~ exists c, forall u, (u < n -> A u <-> Mod (Irred u) c = 0) /\ (Mod (Irred u) c = 0 -> u < n).
   Proof.
@@ -313,6 +315,7 @@ Section Coding.
       all: apply axioms.
   Qed.
 
+  (* In an arbitrary model, up to some bound. *)
   Lemma Coding_model_unary alpha : 
     unary alpha -> 
     forall n rho, rho ⊨ ¬ ¬ ∃ ∀ $0 ⧀ (num n) --> alpha <--> ∃ (ψ ∧ ∃ $1 ⊗ $0 == $3).
@@ -415,6 +418,8 @@ Section Coding.
 
 
 Section notStd.
+
+  (* In a non-standard model. *)
 
   Variable notStd : ~ stdModel D.
   Variable stable_std : forall x, stable (std x).
@@ -519,62 +524,6 @@ Section notStd.
       intros [|[]]; try now intros. lia.
       apply Hk.
   Qed.
-
-
-
-  (* Not used anywhere yet *)
-  Theorem Coding_nonstd alpha b : binary alpha ->
-    ~ ~ exists a, forall u rho, (inu u .: b .: a .: rho) ⊨ (alpha <--> ∃ (ψ ∧ ∃ $1 ⊗ $0 == $4)).
-  Proof.
-    intros binary_alpha.
-    specialize (Coding_model_binary _ binary_alpha) as H.
-    assert (forall n rho, (inu n .: rho) ⊨ ∀ ¬ ¬ ∃ ∀ $0 ⧀ $3 --> alpha[up $1..] <--> ∃ (ψ ∧ ∃ $1 ⊗ $0 == $3) ) as H'.
-    intros n rho.
-    rewrite <-switch_num. cbn -[sat]. rewrite !num_subst.
-    assert (ψ[var] = ψ[up (up (up (up (num n)..)))] ) as <-.
-    eapply bounded_subst. apply Hψ.
-    intros [|[]]; try now intros. lia.
-    assert (alpha[up $1..][var] = alpha[up $1..][up (up (up (num n)..))] ) as E.
-    rewrite !subst_comp.
-    eapply bounded_subst. apply binary_alpha.
-    intros [|[]]; cbn; try reflexivity; lia.
-    setoid_rewrite <-E. rewrite !subst_var.
-    specialize (H n). 
-    rewrite unfold_sless, num_subst in H.
-    apply H.
-    apply Overspill_DN in H'; auto.
-    2 : { repeat solve_bounds.
-          2,3 : eapply bounded_up; try apply binary_alpha; try apply Hψ; try lia.
-          all: eapply subst_bound; eauto.
-          all: intros [|[]]; solve_bounds. }
-    rewrite <-NNN_N.
-    apply (DN_chaining H'), DN. clear H' H.
-      intros (e & He1 & He2).
-      cbn in He2. specialize (He2 (fun _ => i0) b).
-      apply (DN_chaining He2), DN.
-      intros [a Ha].
-      exists a. intros n rho.
-      assert (inu n i⧀ e) as Hne;  [now apply num_lt_nonStd|].
-      specialize (Ha _ Hne) as [Ha1 Ha2].
-      split; cbn.
-    + intros H. destruct Ha1 as [d Hd].
-      rewrite sat_comp.
-      eapply bound_ext. apply binary_alpha. 2: apply H.
-      intros [|[]]; try now intros. lia.
-      exists d. split.
-      eapply bound_ext. apply Hψ. 2: apply Hd.
-      intros [|[]]; try now intros. lia.
-      apply Hd.
-    + intros [k Hk].
-      rewrite sat_comp in Ha2.
-      eapply bound_ext. apply binary_alpha. 2: apply Ha2.
-      intros [|[]]; try now intros. lia.
-      exists k. split.
-      eapply bound_ext. apply Hψ. 2: apply Hk.
-      intros [|[]]; try now intros. lia.
-      apply Hk.
-  Abort.
-
 
 End notStd.
 End Coding.

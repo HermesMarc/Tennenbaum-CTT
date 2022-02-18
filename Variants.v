@@ -3,6 +3,7 @@ Require Import FOL Peano Tarski Deduction NumberTheory Synthetic Enumerability D
 
 Notation "⊨ phi" := (forall rho, rho ⊨ phi) (at level 21).
 
+(** * Variants of Tennenbaum's theorem *)
 
 Section Variants.
 
@@ -22,6 +23,7 @@ Definition Div_nat (d : D) := fun n => div_num n d.
 Definition div_pi ψ n a :=  (inu n .: (fun _ => a)) ⊨ (∃ (ψ ∧ ∃ $1 ⊗ $0 == $3)).
 Definition prime_form ψ := bounded 2 ψ /\ (forall x, Q ⊢I ∀ ψ[up (num x)..] <--> $0 == num (Irred x) ).
 
+(** *** CT_Q yields a formula for prime numbers. *)
 Lemma Irred_repr :
   exists ψ, prime_form ψ.
 Proof.
@@ -98,6 +100,7 @@ Qed.
 
 (* ** Variants of Tennenbaum's Theorem *)
 
+(** ** Tennenbaum via diagonal proof *)
 Theorem Tennenbaum1 :
   MP -> Discrete D -> Enumerable D <-> forall e, std e.
 Proof.
@@ -113,7 +116,7 @@ Proof.
   - intros ?. now apply Std_is_Enumerable.
 Qed.
 
-
+(** ** Tennenbaum via inseparable formulas *)
 Corollary Tennenbaum_insep :
   MP -> Discrete D -> (forall d, ~~Dec (Div_nat d)) -> (forall e, ~~std e).
 Proof.
@@ -139,7 +142,7 @@ Proof.
   - intros ??. now apply DN, Dec_Div_nat_std.
 Qed.
 
-
+(** ** Makholm's Variant *)
 Theorem Makholm :
   (exists ψ, prime_form ψ /\ (obj_Coding ψ)) -> obj_Insep -> nonStd D <-> exists d, ~ Dec (Div_nat d).
 Proof.
@@ -165,6 +168,7 @@ Proof.
   intros [x y]. destruct (@Peano.eq_dec D I axioms x y); now (left + right).
 Qed.
 
+(** ** McCarty's proof for the categoricity of HA. *)
 Theorem McCarty :
   (exists ψ, prime_form ψ /\ (obj_Coding ψ)) -> obj_Insep -> MP -> (forall X, UC X bool) -> (forall e, std e).
 Proof.

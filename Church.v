@@ -20,20 +20,27 @@ Section ChurchThesis.
 Instance ff : falsity_flag := falsity_on.
 Context {Δ0 : Delta0}.
 
+(** * Church's Thesis *)
+
+(** ** CT_Q  *)
+
 Definition represents ϕ f := forall x, Q ⊢I ∀ ϕ[up (num x)..] <--> $0 == num (f x).
 Definition CT_Q := forall f : nat -> nat, exists ϕ, bounded 3 ϕ /\ inhabited(delta0 ϕ) /\ represents (∃ ϕ) f.
+
+(* Weaker Version of CT_Q *)
 Definition WCT_Q := forall f : nat -> nat, ~ ~ exists ϕ, bounded 3 ϕ /\ inhabited(delta0 ϕ) /\ represents (∃ ϕ) f.
 
+(** Strong Representability *)
 
 Definition strong_repr ϕ (p : nat -> Prop) := (forall x, p x -> Q ⊢I ϕ[(num x)..]) /\ (forall x, ~ p x -> Q ⊢I ¬ϕ[(num x)..]).
 Definition RT_strong := forall p : nat -> Prop, Dec p -> exists ϕ, bounded 2 ϕ /\ inhabited(delta0 ϕ) /\ strong_repr (∃ ϕ) p.
 Definition WRT_strong := forall p : nat -> Prop, Dec p ->  ~ ~ exists ϕ, bounded 2 ϕ /\ inhabited(delta0 ϕ) /\ strong_repr (∃ ϕ) p.
 
+(** Weak Representability *)
 
 Definition weak_repr ϕ (p : nat -> Prop) := (forall x, p x <-> Q ⊢I ϕ[(num x)..]).
 Definition RT_weak := forall p : nat -> Prop, enumerable p -> exists ϕ, bounded 3 ϕ /\ inhabited(delta0 ϕ) /\ weak_repr (∃∃ ϕ) p.
 Definition WRT_weak := forall p : nat -> Prop, enumerable p -> ~ ~ exists ϕ, bounded 3 ϕ /\ inhabited(delta0 ϕ) /\ weak_repr (∃∃ ϕ) p.
-
 
 Definition RT := RT_strong /\ RT_weak.
 
@@ -56,6 +63,7 @@ Proof.
 Qed.
 
 
+(** ** Strong part of the representability theorem.  *)
 Lemma CT_RTs :
   CT_Q -> RT_strong.
 Proof.
@@ -117,7 +125,7 @@ Proof.
     + now right.
 Qed.
 
-
+(** ** Weak part of the representability theorem.  *)
 Lemma CT_RTw :
   CT_Q -> RT_weak.
 Proof.

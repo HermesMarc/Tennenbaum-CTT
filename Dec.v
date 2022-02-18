@@ -26,14 +26,9 @@ Proof.
   destruct d as [A|A]; cbn; intuition congruence.
 Qed.
 
-(* Lemma Dec_auto_not (X: Prop) (d: dec X) : *)
-(*   ~ X -> ~ Dec X. *)
-(* Proof. *)
-(*   destruct d as [A|A]; cbn; tauto. *)
-(* Qed. *)
 
-(* Hint Resolve Dec_auto Dec_auto_not : core. *)
-Hint Extern 4 =>  (* Improves type class inference *)
+
+Hint Extern 4 => 
 match goal with
   | [  |- dec ((fun _ => _) _) ] => cbn
 end : typeclass_instances.
