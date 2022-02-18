@@ -214,7 +214,7 @@ End Overspill.
 Section Coding.
 
   
-  (** * In the standard model, up to some bound. *)
+  (** In the standard model, up to some bound. *)
   Lemma Coding_nat A n :
     ~ ~ exists c, forall u, (u < n -> A u <-> Mod (Irred u) c = 0) /\ (Mod (Irred u) c = 0 -> u < n).
   Proof.
@@ -315,7 +315,7 @@ Section Coding.
       all: apply axioms.
   Qed.
 
-  (* In an arbitrary model, up to some bound. *)
+  (** In an arbitrary model, up to some bound. *)
   Lemma Coding_model_unary alpha : 
     unary alpha -> 
     forall n rho, rho ⊨ ¬ ¬ ∃ ∀ $0 ⧀ (num n) --> alpha <--> ∃ (ψ ∧ ∃ $1 ⊗ $0 == $3).
@@ -419,7 +419,7 @@ Section Coding.
 
 Section notStd.
 
-  (* In a non-standard model. *)
+  (** In a non-standard model. *)
 
   Variable notStd : ~ stdModel D.
   Variable stable_std : forall x, stable (std x).

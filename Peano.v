@@ -12,7 +12,7 @@ Existing Instance falsity_on.
 
 (** * Peano Arithmetic *)
 
-(** ** Non-logical symbols used in the language of PA *)
+(** Non-logical symbols used in the language of PA *)
 
 Inductive PA_funcs : Type :=
   Zero : PA_funcs
@@ -89,7 +89,7 @@ Definition forall_times n (phi : form) := iter (fun psi => ∀ psi) n phi.
 
 (** ** PA Axioms *)
 
-(** *** Basic Axioms *)
+(** Basic Axioms *)
 
 Definition ax_zero_succ := ∀  (zero == σ var 0 --> ⊥).
 Definition ax_succ_inj :=  ∀∀ (σ $1 == σ $0 --> $1 == $0).
@@ -98,7 +98,7 @@ Definition ax_add_rec :=   ∀∀ ((σ $0) ⊕ $1 == σ ($0 ⊕ $1)).
 Definition ax_mult_zero := ∀  (zero ⊗ $0 == zero).
 Definition ax_mult_rec :=  ∀∀ (σ $1 ⊗ $0 == $0 ⊕ $1 ⊗ $0).
 
-(** *** Induction Scheme *)
+(** Induction Scheme *)
 
 Definition ax_induction (phi : form) :=
   phi[zero..] --> (∀ phi --> phi[σ $0 .: S >> var]) --> ∀ phi.
@@ -107,7 +107,7 @@ Definition ax_zero_or_succ := ∀ $0 == zero ∨ ∃ $1 == σ $0.
 
 
 
-(** *** Equality Axioms *)
+(** Equality Axioms *)
 
 Definition ax_refl :=  ∀   $0 == $0.
 Definition ax_sym :=   ∀∀  $1 == $0 --> $0 == $1.
@@ -133,7 +133,7 @@ Global Opaque Q.
 
 
 
-(** ** The Theory PA *)
+(** The Theory PA *)
 Inductive PA : form -> Prop :=
 | PA_Q : forall ax, List.In ax Q -> PA ax
 | PA_induction : forall phi, PA (ax_induction phi).
@@ -644,7 +644,7 @@ Section Models.
 
     Section Euclid.
 
-      (** ** Euclidean Lemma *)
+      (** *** Euclidean Lemma *)
 
       Lemma iEuclid : 
         forall x q, exists d r, x = d i⊗ q i⊕ r /\ (i0 i⧀ q -> r i⧀ q).
@@ -698,7 +698,7 @@ Section Models.
       Qed.
 
 
-      (** ** Uniqueness for the Euclidean Lemma *)
+      (** Uniqueness for the Euclidean Lemma *)
       
       Lemma iFac_unique q d1 r1 d2 r2 : r1 i⧀ q -> r2 i⧀ q ->
             r1 i⊕ d1 i⊗ q = r2 i⊕ d2 i⊗ q -> d1 = d2 /\ r1 = r2.
@@ -755,7 +755,7 @@ End Models.
 Arguments PAsat {_ _} _.
 Notation "'PA⊨' phi" := (forall D (I : interp D) rho, (forall psi : form, PA psi -> rho ⊨ psi) -> rho ⊨ phi) (at level 30).
 
-(** ** Standard Model of PA *)
+(** *** Standard Model of PA *)
 
 Section StandartModel.
 
@@ -1067,7 +1067,7 @@ Section Q_prv.
     - assumption.
   Qed.
 
-  (** * Homomorphism Properties of Numerals *)
+  (** Homomorphism Properties of Numerals *)
 
   Lemma num_add_homomorphism  x y : 
     Gamma ⊢ ( num x ⊕ num y == num (x + y) ).
@@ -1180,7 +1180,7 @@ Section Q_prv.
   Qed.
 
 
-  (** * Closed terms are numerals. *)
+  (** Closed terms are numerals. *)
 
   Lemma closed_term_is_num s : 
     bounded_t 0 s -> { n & Gamma ⊢ s == num n }.
@@ -1274,7 +1274,7 @@ Section Q_prv.
   Qed.  
 
 
-  (** * Provability of equality for closed terms is decidable. *)
+  (** Provability of equality for closed terms is decidable. *)
   
   Lemma term_eq_dec s t : 
     bounded_t 0 s -> bounded_t 0 t -> { Gamma ⊢ s == t } + { Gamma ⊢ ¬ s == t }.

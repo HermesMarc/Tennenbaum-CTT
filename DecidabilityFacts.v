@@ -144,7 +144,7 @@ Qed.
 
 
 
-(** ** The product type for Nat is witnessing. *)
+(** * The product type for Nat is witnessing. *)
 
 Theorem ProductWO (p : nat -> nat -> Prop) : 
   ( forall x y, dec (p x y) ) -> (exists x y, p x y) -> { x & { y & p x y }}.

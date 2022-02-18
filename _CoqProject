@@ -9,8 +9,8 @@ DecidabilityFacts.v
 NumberTheory.v
 
 FOL.v
-Deduction.v
 Tarski.v
+Deduction.v
 
 Dec.v
 ListEnumerabilityFacts.v

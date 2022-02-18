@@ -68,7 +68,7 @@ Definition Separated X := Dec (fun p : X * X => fst p <> snd p).
 Definition Markov X := forall p : X -> Prop, Dec p -> (~~ ex p) -> ex p.
 Definition Witnessing X := forall p : X -> Prop, Dec_sigT p -> witnessing p.
 
-(** * Equivalent characterizations *)
+(** ** Equivalent characterizations *)
 
 Fact Dec_decider {X} p :
   Dec p <-> ex (@decider X p).

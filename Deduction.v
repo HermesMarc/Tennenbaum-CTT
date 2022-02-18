@@ -61,7 +61,7 @@ Notation "T ⊢TC phi" := (@tprv _ _ _ class T phi) (at level 55).
 Ltac comp := repeat (progress (cbn in *; autounfold in *)).
 
 
-(** ** Lemmas for context manipulation. *)
+(** Lemmas for context manipulation. *)
                      
 Section ND_def.
 

@@ -46,7 +46,7 @@ Section Tarski.
   Context {Σ_funcs : funcs_signature}.
   Context {Σ_preds : preds_signature}.
   
-  (** ** Semantic notions *)
+  (** Semantic notions *)
 
   Section Semantics.
 
@@ -217,7 +217,7 @@ Section Tarski.
 
 
 
-  (** ** Results for bounded formulas. *)
+  (** Results for bounded formulas. *)
   
   Section Ext.
 

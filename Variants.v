@@ -23,7 +23,7 @@ Definition Div_nat (d : D) := fun n => div_num n d.
 Definition div_pi ψ n a :=  (inu n .: (fun _ => a)) ⊨ (∃ (ψ ∧ ∃ $1 ⊗ $0 == $3)).
 Definition prime_form ψ := bounded 2 ψ /\ (forall x, Q ⊢I ∀ ψ[up (num x)..] <--> $0 == num (Irred x) ).
 
-(** *** CT_Q yields a formula for prime numbers. *)
+(** CT_Q yields a formula for prime numbers. *)
 Lemma Irred_repr :
   exists ψ, prime_form ψ.
 Proof.

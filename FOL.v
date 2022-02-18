@@ -5,7 +5,7 @@ Definition vec := t.
 
 Require Import Equations.Equations.
 
-(** * Proposed new definition of First Order Logic in Coq *)
+(** * Definition of First Order Logic in Coq *)
 
 (**
 
@@ -212,7 +212,7 @@ Notation "↑" := (S >> var) : subst_scope.
 
 
 
-(** ** Substituion lemmas *)
+(** Substituion lemmas *)
 
 Ltac cbns :=
     cbn; repeat (match goal with [ |- context f[subst_form ?sigma ?phi] ] => change (subst_form sigma phi) with (phi[sigma]) end).
@@ -368,7 +368,7 @@ End Subst.
 
 
 
-(** ** Bounded formulas *)
+(** Bounded formulas *)
 
 Section Bounded.
 

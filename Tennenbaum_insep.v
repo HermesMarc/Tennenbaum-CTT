@@ -216,7 +216,7 @@ Section Model.
   Qed.
 
 
-  (** * Potential existence of undecidable predicates. *)
+  (** Potential existence of undecidable predicates. *)
 
   Lemma nonDecDiv :
     Insep -> Stable std -> nonStd D -> ~ ~ exists d : D, ~ Dec (fun n => div_pi n d).

@@ -72,7 +72,7 @@ Proof.
 Qed.
 
 
-(** ** Uniqueness *)
+(** Uniqueness *)
   
 Section Uniqueness.
 
@@ -140,7 +140,7 @@ Proof.
 Qed.
 
 
-(** ** Homomorphism property of the modulus. *)
+(** Homomorphism property of the modulus. *)
 
 Section Homomorphism.
 
@@ -208,7 +208,7 @@ End Homomorphism.
 
 Section PrimeDec.
 
-  (** ** Irreducible Numbers *)
+  (** Irreducible Numbers *)
 
   Definition irred' p := p > 1 /\ forall n, Mod n p = 0 -> (n = 1) \/ (n = p).
 
@@ -235,7 +235,7 @@ Section PrimeDec.
   Qed.
 
 
-  (** ** It is decidable whether a number is irreducible. *)
+  (** It is decidable whether a number is irreducible. *)
   Lemma Dec_sigT_irred : 
     Dec_sigT (irred).
   Proof.
@@ -273,7 +273,7 @@ Section PrimeDec.
     exists x, y. nia.
   Qed.
 
-  (** ** Every number > 1 has an irreducible factor. *)
+  (** Every number > 1 has an irreducible factor. *)
   
   Lemma irred_factor n : 
     n > 1 -> { k | irred k /\ Mod k n = 0}.
@@ -337,7 +337,7 @@ Section PrimeDec.
 
   Definition prime p := p > 1 /\ forall a b, Mod p (a*b) = 0 -> Mod p a = 0 \/ Mod p b = 0.
 
-  (** ** Prime and irreducible are equivalent *)
+  (** Prime and irreducible are equivalent *)
   
   Lemma prime_irred_equiv p : irred p <-> prime p.
   Proof.
@@ -400,7 +400,7 @@ Section PrimeInf.
       apply Mod0_is_0. lia.
   Qed.
 
-  (** ** There are infinitely many irreducible numbers. *)
+  (** There are infinitely many irreducible numbers. *)
 
   Lemma infty_irred : forall N, { p & N < p /\ irred p}.
   Proof.
@@ -419,7 +419,7 @@ Section PrimeInf.
     - unfold irred. tauto.
   Defined.
 
-  (** ** An injective function producing infinitely many irreducible numbers. *)
+  (** An injective function producing infinitely many irreducible numbers. *)
 
   Fixpoint Irred n := match n with
                       | 0 => projT1 (infty_irred 0)

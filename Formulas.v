@@ -41,10 +41,26 @@ Proof.
 Qed.
 
 
+(** * PA and Q are consistent in Coq. *)
+
+Lemma PA_consistent : ~ PA ⊢TI ⊥.
+Proof.
+  intros H. eapply tsoundness in H.
+  2: instantiate (1 := fun _ => 0).
+  apply H.
+  intros ax Hax. 
+  now apply PA_std_axioms.
+Qed.
+
+Corollary Q_consistent : ~ Q ⊢I ⊥.
+Proof.
+  intros H. apply PA_consistent.
+  exists Q. split; [constructor|]; auto.
+Qed.
 
 
 
-(** * Abstract definition of Δ0 formulas. *)
+(** * Δ0 Formulas. *)
 
 Class Delta0 : Type :=  
   mk_Delta0{ 
@@ -110,24 +126,6 @@ Proof.
 Qed.
 
 
-(** * PA and Q are consistent in Coq. *)
-
-Lemma PA_consistent : ~ PA ⊢TI ⊥.
-Proof.
-  intros H. eapply tsoundness in H.
-  2: instantiate (1 := fun _ => 0).
-  apply H.
-  intros ax Hax. 
-  now apply PA_std_axioms.
-Qed.
-
-Corollary Q_consistent : ~ Q ⊢I ⊥.
-Proof.
-  intros H. apply PA_consistent.
-  exists Q. split; [constructor|]; auto.
-Qed.
-
-
 Fact Faster1 {X} A (x : X) : A <<= x :: A.
 Proof.
   firstorder.
@@ -155,7 +153,7 @@ Proof.
       eapply IE. apply H1. apply H2.
 Qed.
 
-(** * Results concerning Delta_0 formulas. *)
+(** Results concerning Delta_0 formulas. *)
 
 Section Closed.
 
@@ -268,7 +266,7 @@ End Closed.
 Notation "N⊨ phi" := (forall rho, @sat _ _ nat interp_nat _ rho phi) (at level 40).
 
 
-(** * Σ1 Completeness  *)
+(** ** Σ1 Completeness  *)
 Section Sigma1.
 
   Variable α : form.
