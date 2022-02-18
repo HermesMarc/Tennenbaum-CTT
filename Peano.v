@@ -136,7 +136,7 @@ Global Opaque Q.
 (** The Theory PA *)
 Inductive PA : form -> Prop :=
 | PA_Q : forall ax, List.In ax Q -> PA ax
-| PA_induction : forall phi, PA (ax_induction phi).
+| PA_induction : forall phi, bounded 1 phi -> PA (ax_induction phi).
 
 
 Notation "x 'i=' y" := (i_P (Σ_funcs:=PA_preds_signature) (P:=Eq) [x ; y]) (at level 30) : PA_Notation.
@@ -323,7 +323,7 @@ Section Models.
       Theorem induction : phi[[i0]] -> (forall n, phi[[n]] -> phi[[iσ n]] ) -> forall n, phi[[n]].
       Proof.
         assert (⊨ ax_induction phi) as H.
-        apply axioms. apply PA_induction.
+        apply axioms. apply PA_induction; trivial.
         intros ??? rho.
         specialize (H rho). 
         apply H.
@@ -780,8 +780,8 @@ Section StandartModel.
     intros []. auto. 
     - right. exists n; auto. 
     - destruct H.
-    - intros H0 IH. intros d. induction d.
-      + apply sat_single in H0. apply H0.
+    - intros H1 IH. intros d. induction d.
+      + apply sat_single in H1. apply H1.
       + apply IH in IHd. 
         eapply sat_comp, sat_ext in IHd.
         apply IHd. intros []; now cbn.
