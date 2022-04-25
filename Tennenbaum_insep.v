@@ -91,7 +91,7 @@ Section Model.
     repeat split; auto; unfold weak_repr in *.
     - intros n h%soundness. apply (disj n).
       rewrite Hα, Hβ.
-      split; apply Σ1_ternary_complete; auto.
+      split; apply sigma1_ternary_complete; auto.
       all: intros rho; specialize (h _ interp_nat rho);
             apply h; apply Q_std_axioms.
     - setoid_rewrite <-Hα.
@@ -130,7 +130,7 @@ Section Model.
     repeat split; unfold weak_repr in *.
     - intros n h%soundness. apply (disj n).
       rewrite Hα, Hβ.
-      split; apply Σ1_ternary_complete; auto.
+      split; apply sigma1_ternary_complete; auto.
       all: intros rho; specialize (h _ interp_nat rho);
             apply h; apply Q_std_axioms.
     - setoid_rewrite <-Hα.
@@ -254,7 +254,7 @@ Section Model.
           - apply A_n.
           - apply Q_std_axioms.
         }
-        apply Σ1_ternary_complete' in A_n'; auto.
+        apply sigma1_ternary_complete' in A_n'; auto.
         destruct A_n' as (a & b & Hab).
         exists (inu a), (inu b). repeat split; [apply num_lt_nonStd; auto|apply num_lt_nonStd; auto| ].
         apply soundness in Hab.
@@ -272,7 +272,7 @@ Section Model.
         - apply B_n.
         - apply Q_std_axioms.
       }
-      apply Σ1_ternary_complete' in B_n'; auto.
+      apply sigma1_ternary_complete' in B_n'; auto.
       destruct B_n' as (a & b & Hab).
       apply soundness in Hab.
       assert ((fun _ => e) ⊨ (∃∃ $0 ⧀ $2 ∧ $1 ⧀ $2 ∧ β[up (up (num n)..)] )) as Heβ.
@@ -331,7 +331,7 @@ Section Model.
       apply (Disj k0).
       change (Q ⊢I ((∃∃ α)[(num k0)..] ∧ (∃∃ β)[(num k0)..])).
       apply CI.
-      + apply Σ1_ternary_complete; auto.
+      + apply sigma1_ternary_complete; auto.
         intros sigma. rewrite <-switch_num in H31.
         exists k1, k2.
         assert ((inu k1 .: inu k2 .: inu k3 .: inu k4 .: inu n .: rho) ⊨ α[up (up (num k0)..)][(num k2)..][(num k1)..]).
@@ -362,7 +362,7 @@ Section Model.
         * rewrite !subst_comp. now apply delta0_subst.
         * apply axioms.
         * intros ??. now apply PA_std_axioms.
-      + apply Σ1_ternary_complete; auto.
+      + apply sigma1_ternary_complete; auto.
         intros sigma. rewrite <-switch_num in H53.
         exists k3, k4.
         assert ((inu k1 .: inu k2 .: inu k3 .: inu k4 .: inu n .: rho) ⊨ β[up (up (num k0)..)][(num k4)..][(num k3)..]).

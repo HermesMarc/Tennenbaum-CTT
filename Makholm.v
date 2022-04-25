@@ -32,13 +32,15 @@ Section Model.
 
 
   (** * HA-inseparable formulas. *)
-  Definition obj_Insep := 
-    exists α β,
-      binary α /\ inhabited(delta0 α) /\ binary β /\ inhabited(delta0 β) /\ 
+
+  Definition def_obj_Insep α β :=
+    binary α /\ inhabited(delta0 α) /\ binary β /\ inhabited(delta0 β) /\ 
       ( PA ⊢TI ¬ ∃ (∃ α) ∧ (∃ β) ) /\ 
       (forall G,
           Dec G -> (forall n, Q ⊢I (∃ α)[(num n)..] -> G n) ->
           (forall n, ~ (Q ⊢I (∃ β)[(num n)..] /\ G n)) -> False).
+
+  Hypothesis obj_Insep : exists α β, def_obj_Insep α β.
 
   Definition div_num n (d : D) := exists e, inu n i⊗ e = d.
   Definition Div_nat (d : D) := fun n => div_num n d.
@@ -46,9 +48,9 @@ Section Model.
   (** * Makholm's proof of Tennenbaum's Theorem. *)
 
   Theorem Makholm :
-    obj_Insep -> nonStd D -> exists d, ~ Dec (Div_nat d).
+    nonStd D -> exists d, ~ Dec(Div_nat d).
   Proof.
-    intros (α & β & Ha1 & [Ha0] & Hb1 & [Hb0] & Disj & Insepa).
+    destruct obj_Insep as (α & β & Ha1 & [Ha0] & Hb1 & [Hb0] & Disj & Insepa).
     intros [e Nstd_e].
     specialize (coding α Ha1 Ha0).
     pose (X n := (inu n .: (fun _ => e)) ⊨ ((∃ $0 ⧀ $3 ∧ α) )).
@@ -90,13 +92,13 @@ Section Model.
            ++ left. apply H, ψ_equiv; auto.
            ++ right. intros nh%H. apply h.
               apply ψ_equiv in nh; auto.
-        --  intros n [m Hm]%Σ1_complete''; auto. 
+        --  intros n [m Hm]%sigma1_complete''; auto. 
             exists (inu m). cbn. split.
             now apply num_lt_nonStd.
             rewrite <-switch_up_num, <-switch_num.
             eapply soundness; eauto.
             intros ??; apply axioms. now constructor.
-        --  intros n [[m Bnm]%Σ1_complete'' X_n]; auto.
+        --  intros n [[m Bnm]%sigma1_complete'' X_n]; auto.
             eapply tsoundness with (rho := (fun _ => e)) in Disj; auto.
             cbn in Disj. apply Disj.
             exists (inu n). split.

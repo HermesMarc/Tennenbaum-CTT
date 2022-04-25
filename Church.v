@@ -24,10 +24,20 @@ Context {Δ0 : Delta0}.
 
 (** ** CT_Q  *)
 
+(*  CT_Q internalizes computability, by claiming that every function
+    nat -> nat is computable in a model of computation. In this case,
+    the model of computaion is based on arithmetic: It represents
+    functions by formulas in the language of PA in such a way that a 
+    weak fragment (Q <<= PA) can prove the agreement of the formula
+    with the function on every input.  
+ *)
+
 Definition represents ϕ f := forall x, Q ⊢I ∀ ϕ[up (num x)..] <--> $0 == num (f x).
 Definition CT_Q := forall f : nat -> nat, exists ϕ, bounded 3 ϕ /\ inhabited(delta0 ϕ) /\ represents (∃ ϕ) f.
 
-(* Weaker Version of CT_Q *)
+(*  Weaker Version of CT_Q, where the existence of the formula 
+    is only given potentially (i.e. behing a double negation). 
+ *)
 Definition WCT_Q := forall f : nat -> nat, ~ ~ exists ϕ, bounded 3 ϕ /\ inhabited(delta0 ϕ) /\ represents (∃ ϕ) f.
 
 (** Strong Representability *)
@@ -138,7 +148,7 @@ Proof.
   - constructor. now apply delta0_subst. 
   - intros x. rewrite Hf. split.
     + intros [n Hn]. symmetry in Hn.
-      apply Σ1_ternary_complete.
+      apply sigma1_ternary_complete.
       { unfold Φ. eapply subst_bound; eauto.
       intros [|[|[]]]; cbn; repeat solve_bounds. }
       {unfold Φ. now apply delta0_subst. }
@@ -187,7 +197,7 @@ Proof.
   - constructor. now apply delta0_subst. 
   - intros x. rewrite Hf. split.
     + intros [n Hn]. symmetry in Hn.
-      apply Σ1_ternary_complete.
+      apply sigma1_ternary_complete.
       { unfold Φ. eapply subst_bound; eauto.
       intros [|[|[]]]; cbn; repeat solve_bounds. }
       {unfold Φ. now apply delta0_subst. }

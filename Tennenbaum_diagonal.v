@@ -69,6 +69,9 @@ Section Model.
   Qed.
 
 
+  (*  We can show the same for types that are witnessing and discrete. 
+      This is a bit more general, since every enumerable type is witnessing.
+   *)
   Lemma dec_div_2 :
     Witnessing D -> Discrete D -> Dec (fun '(n, d) => div_num n d).
   Proof.
@@ -101,71 +104,90 @@ Section Model.
     Unshelve. lia.
   Qed.
 
-  (** * Tennenbaum's Tehorem via a diagnoal argument. *)
 
-  Theorem Tennenbaum_diagonal :
-    RT_strong -> MP -> Enumerable D -> Discrete D -> ~ exists e, ~std e.
+  (** * Tennenbaum's Theorem via a diagnoal argument. *)
+
+  Fact dec_contraposition A B :
+    dec B -> (~B -> ~A) -> (A -> B).
+  Proof. intros HB nB a. destruct HB; tauto. Qed.
+
+  (*  This lemma is similar to the coding lemmas in Coding.v as
+      it allows decidable predicates to be coded.
+   *)
+  Lemma Coding_Dec p :
+    RT_strong -> Stable std -> ~ stdModel D ->
+    Dec p -> ~~ exists c, forall n, p n <-> div_pi n c.
   Proof.
-    intros rt mp enum eq.
-    specialize (dec_div enum eq) as [dec_div].
-    specialize enum as [G HG].
-    apply Discrete_sum in eq.
-    pose (g n := match G n with None => i0 | Some d => d end).
-    pose (p n := ~ div_pi n (g n)).
-    enough (Dec p) as Dec_p.
+    intros rt ? notStd Dec_p.
     destruct (rt _ Dec_p) as [ϕ (b1 & _ & H1 & H2)].
-    intros nonStd.
     unshelve refine (let H:= Coding_nonStd_unary _ _ _ _ Hψ _ _ (∃ ϕ) _ in _); auto.
-    - now apply nonStd_notStd.
-    - intros e. apply MP_Dec_stable; auto.
-      destruct eq as [eq]. constructor. intros n. apply eq.
     - now solve_bounds.
-    - enough (~~False) by tauto.
-      apply (DN_chaining H), DN.
-      intros [cp Hcp]; clear H.
-      destruct (HG cp) as [c Hc].
-      specialize (Hcp c (fun _ => g c)) as [Hc1 Hc2].
-      destruct Dec_p as [Dec_p], (Dec_p c) as [h|h].
-      * specialize (H1 _ h). apply soundness in H1.
-        apply h. unfold div_pi.
-        eapply bound_ext with (N:= 2)(sigma:= inu c .: cp .: (fun _ => g c)).
+    - apply (DN_chaining H), DN; clear H.
+      intros [c Hc].
+      exists c; intros n. split.
+      + intros H. specialize (Hc n (fun _ => c)) as [Hc1 _].
+        apply H1 in H. apply soundness in H.
+        unfold div_pi.
+        eapply bound_ext with (N:= 2)(sigma:= inu n .: c .: (fun _ => c)).
         { repeat solve_bounds.
           eapply bounded_up; [apply Hψ|lia]. }
-        2: {  cbn in Hc1; apply Hc1.
-              destruct (H1 D I (fun _ => g c)) as [d Hd].
-              intros ??; apply axioms; now constructor.
-              exists d. rewrite <-switch_up_num.
-              eapply bound_ext with (N:=1). 3: apply Hd.
-              eapply subst_bound. 1: eauto.
-              intros [|[]]; solve_bounds.
-              cbn. rewrite num_subst. apply closed_num.
-              intros [|]; solve_bounds.
-          }
-        intros [|[]]; cbn; [reflexivity| |lia].
-        intros _. unfold g. now rewrite Hc.
-      * specialize (H2 _ h). apply soundness in H2.
-        apply h. intros H'. eapply H2 with (rho := fun _ => i0); fold sat.
+        { intros [|[]]; cbn; [reflexivity|reflexivity|lia]. }
+        cbn in Hc1; apply Hc1.
+        destruct (H D I (fun _ => c)) as [d Hd].
+        intros ??; apply axioms; now constructor.
+        exists d. rewrite <-switch_up_num.
+        eapply bound_ext with (N:=1). 3: apply Hd.
+        eapply subst_bound. 1: eauto.
+        intros [|[]]; solve_bounds.
+        cbn. rewrite num_subst. apply closed_num.
+        intros [|]; solve_bounds.
+      + specialize (Hc n (fun _ => c)) as [_ Hc2].
+        destruct (Dec_p) as [dec_p]; auto.
+        apply dec_contraposition; [apply dec_p|].
+        intros h [d Hd].
+        specialize (H2 _ h). apply soundness in H2.
+        eapply H2 with (rho := fun _ => i0); fold sat.
         intros ??; apply axioms; now constructor.
         setoid_rewrite switch_num. cbn in Hc2.
-        eapply bound_ext with (N:= 1)(sigma:= inu c .: cp .: (fun _ => g c)).
+        eapply bound_ext with (N:= 1)(sigma:= inu n .: c .: (fun _ => c)).
         { now solve_bounds. }
         intros []; cbn; [reflexivity|lia].
-        apply Hc2. destruct H' as [d Hd].
-        exists d. split.
+        apply Hc2. exists d. split.
         { eapply bound_ext. apply Hψ. 2: apply Hd.
           intros [|[]]; cbn; [reflexivity|reflexivity|lia]. }
         destruct Hd as [_ [k Hk]]. exists k.
-        rewrite Hk; cbn. unfold g. now rewrite Hc.
+        now rewrite Hk.
+  Qed.
+
+
+  Theorem Tennenbaum_diagonal :
+    CT_Q -> MP -> Enumerable D -> Discrete D -> ~~ forall e, std e.
+  Proof.
+    intros rt%CT_RTs mp enum eq notStd.
+    specialize (dec_div enum eq) as [dec_div].
+    specialize enum as [G HG].
+    pose (g n := match G n with None => i0 | Some d => d end).
+    pose (p n := ~ div_pi n (g n)).
+    apply (Coding_Dec p); auto.
+    - intros e. apply MP_Dec_stable; auto.
+      apply Discrete_sum in eq.
+      destruct eq as [eq].
+      constructor. intros n. apply eq.
     - unfold p. constructor. intros n.
       destruct (dec_div (Irred n, g n)) as [h|nh].
       + right. apply DN. now apply ψ_equiv.
       + left. intros ?. apply nh. eapply ψ_equiv; eauto.
+    - intros [c' H]. destruct (HG c') as [c Hc].
+      specialize (H c). revert H. 
+      unfold p, g. rewrite Hc.
+      tauto.
   Qed.
 
+
   Theorem Tennenbaum_diagonal' :
-    WRT_strong -> MP -> Enumerable D -> Discrete D -> ~ exists e, ~std e.
+    WCT_Q -> MP -> Enumerable D -> Discrete D -> ~ exists e, ~std e.
   Proof.
-    intros wrt mp enum eq.
+    intros wrt%WCT_WRTs mp enum eq.
     specialize (dec_div enum eq) as [dec_div].
     specialize enum as [G HG].
     apply Discrete_sum in eq.
@@ -190,18 +212,17 @@ Section Model.
         eapply bound_ext with (N:= 2)(sigma:= inu c .: cp .: (fun _ => g c)).
         { repeat solve_bounds.
           eapply bounded_up; [apply Hψ|lia]. }
-        2: {  cbn in Hc1; apply Hc1.
-              destruct (H1 D I (fun _ => g c)) as [d Hd].
-              intros ??; apply axioms; now constructor.
-              exists d. rewrite <-switch_up_num.
-              eapply bound_ext with (N:=1). 3: apply Hd.
-              eapply subst_bound. 1: eauto.
-              intros [|[]]; solve_bounds.
-              cbn. rewrite num_subst. apply closed_num.
-              intros [|]; solve_bounds.
-          }
-        intros [|[]]; cbn; [reflexivity| |lia].
-        intros _. unfold g. now rewrite Hc.
+        { intros [|[]]; cbn; [reflexivity| |lia].
+          intros _. unfold g. now rewrite Hc. }
+        cbn in Hc1; apply Hc1.
+        destruct (H1 D I (fun _ => g c)) as [d Hd].
+        intros ??; apply axioms; now constructor.
+        exists d. rewrite <-switch_up_num.
+        eapply bound_ext with (N:=1). 3: apply Hd.
+        eapply subst_bound. 1: eauto.
+        intros [|[]]; solve_bounds.
+        cbn. rewrite num_subst. apply closed_num.
+        intros [|]; solve_bounds.
       * specialize (H2 _ h). apply soundness in H2.
         apply h. intros H'. eapply H2 with (rho := fun _ => i0); fold sat.
         intros ??; apply axioms; now constructor.

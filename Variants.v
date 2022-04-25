@@ -5,23 +5,25 @@ Notation "⊨ phi" := (forall rho, rho ⊨ phi) (at level 21).
 
 (** * Variants of Tennenbaum's theorem *)
 
+Module T.
 Section Variants.
-
 Instance ff : falsity_flag := falsity_on.
 Context {Δ0 : Delta0}.
 
 Variable D : Type.
 Variable I : interp D.
 Variable axioms : forall ax, PA ax -> ⊨ ax.
-Variable ct : CT_Q.
 
+Hypothesis ct : CT_Q.
 Hypothesis delta0_definite : forall phi, delta0 phi -> Q ⊢I phi ∨ ¬ phi.
+Definition obj_Insep := exists α β, def_obj_Insep α β.
 
 Definition div e d := exists k : D, e i⊗ k = d.
 Definition div_num n (d : D) := exists e, inu n i⊗ e = d.
 Definition Div_nat (d : D) := fun n => div_num n d.
 Definition div_pi ψ n a :=  (inu n .: (fun _ => a)) ⊨ (∃ (ψ ∧ ∃ $1 ⊗ $0 == $3)).
 Definition prime_form ψ := bounded 2 ψ /\ (forall x, Q ⊢I ∀ ψ[up (num x)..] <--> $0 == num (Irred x) ).
+
 
 (** CT_Q yields a formula for prime numbers. *)
 Lemma Irred_repr :
@@ -57,11 +59,10 @@ Proof.
   now apply (DN_chaining h), DN.
 Qed.
 
-Lemma Dec_Div_nat_std :
-  forall e, std e -> Dec (Div_nat e).
+Lemma Dec_Div_nat_std ψ :
+  prime_form ψ -> forall e, std e -> Dec (Div_nat e).
 Proof.
-  intros e [n <-].
-  destruct Irred_repr as [ψ ]; auto.
+  intros Hψ e [n <-].
   constructor; intros x.
   destruct n.
   - left. exists (inu 0).
@@ -102,23 +103,25 @@ Qed.
 
 (** ** Tennenbaum via diagonal proof *)
 Theorem Tennenbaum1 :
-  MP -> Discrete D -> Enumerable D <-> forall e, std e.
+  MP ->
+  Discrete D -> 
+  Enumerable D <-> forall e, std e.
 Proof.
-  intros mp eq. 
+  intros mp eq.
   destruct Irred_repr as [ψ ]; auto.
-  apply CT_RTs in ct.
   split.
   - intros ?.
-    assert (~ exists e, ~ std e) as He.
+    assert (~~ forall e, std e) as He.
     { eapply Tennenbaum_diagonal with (ψ0:=ψ); eauto. }
     intros e. apply MP_Discrete_stable_std; auto.
-    intros nH. apply He. now exists e.
   - intros ?. now apply Std_is_Enumerable.
 Qed.
 
 (** ** Tennenbaum via inseparable formulas *)
 Corollary Tennenbaum_insep :
-  MP -> Discrete D -> (forall d, ~~Dec (Div_nat d)) -> (forall e, ~~std e).
+  MP ->
+  Discrete D ->
+  (forall d, ~~Dec (Div_nat d)) -> (forall e, ~~std e).
 Proof.
   intros mp eq DecDiv e He.
   destruct Irred_repr as [ψ ]; auto.
@@ -133,27 +136,34 @@ Proof.
     now apply Dec_div_reduction.
 Qed.
 
+
 Theorem Tennenbaum2 :
-  MP -> Discrete D -> (forall d, ~~Dec (Div_nat d)) <-> (forall e, std e).
+  MP ->
+  Discrete D ->
+  (forall d, ~~Dec (Div_nat d)) <-> (forall e, std e).
 Proof.
+  destruct Irred_repr as [ψ ].
   intros mp eq. split.
   - intros ??. apply MP_Discrete_stable_std; auto.
     eapply Tennenbaum_insep; eauto.
-  - intros ??. now apply DN, Dec_Div_nat_std.
+  - intros ??. eapply DN, Dec_Div_nat_std; eauto.
 Qed.
+
 
 (** ** Makholm's Variant *)
 Theorem Makholm :
-  (exists ψ, prime_form ψ /\ (obj_Coding ψ)) -> obj_Insep -> nonStd D <-> exists d, ~ Dec (Div_nat d).
+  (exists ψ, prime_form ψ /\ (obj_Coding ψ)) -> obj_Insep -> 
+  nonStd D <-> exists d, ~ Dec (Div_nat d).
 Proof.
   intros [ψ [H1 H2]] ?. split.
   - eapply Makholm; eauto.
   - intros [d Hd]. exists d.
-  now intros ?%Dec_Div_nat_std.
+  now intros ?%(Dec_Div_nat_std _ H1).
 Qed.
 
 Corollary Makholm' :
-  (exists ψ, prime_form ψ /\ (obj_Coding ψ)) -> obj_Insep -> (forall e, ~~std e) <-> (forall d, ~~ Dec (Div_nat d)).
+  (exists ψ, prime_form ψ /\ (obj_Coding ψ)) -> obj_Insep ->
+  (forall e, ~~std e) <-> (forall d, ~~ Dec (Div_nat d)).
 Proof.
   intros H1 H2.
   specialize (Makholm H1 H2) as [m1 m2].
@@ -164,7 +174,8 @@ Qed.
 
 
 Lemma Tennenbaum3 :
-  (exists ψ, prime_form ψ /\ (obj_Coding ψ)) -> obj_Insep -> (UC nat bool) -> ~ nonStd D.
+  (exists ψ, prime_form ψ /\ (obj_Coding ψ)) -> obj_Insep -> 
+  (UC nat bool) -> ~ nonStd D.
 Proof.
   intros ??? H.
   assert (nonStd D) as [e He]%Makholm by assumption; auto.
@@ -181,14 +192,85 @@ Qed.
 
 (** ** McCarty's proof for the categoricity of HA. *)
 Theorem McCarty :
-  (exists ψ, prime_form ψ /\ (obj_Coding ψ)) -> obj_Insep -> MP -> (forall X, UC X bool) -> (forall e, std e).
+  MP -> (forall X, UC X bool) ->
+  (exists ψ, prime_form ψ /\ (obj_Coding ψ)) -> obj_Insep ->
+  (forall e, std e).
 Proof.
-  intros ??? H e.
-  apply MP_Discrete_stable_std; auto. 
+  intros ???? e.
+  apply MP_Discrete_stable_std; auto.
   { now apply UC_Discrete. }
   intros He. apply Tennenbaum3; auto.
   now exists e.
 Qed.
 
-
 End Variants.
+End T.
+
+
+
+(*  Below, we list all major results again in a way that makes
+    all their assumptions explicit.
+
+    We format the statements rougly as:
+
+    Lemma Name (Parameters) :
+      Logical Assumptions ->
+      Assumptions about the Model ->
+      other Assumptions ->
+      Conclusion.
+    Proof. [...] Qed.
+ *)
+
+
+Theorem Tennenbaum2 {Δ0 : Delta0} D (I : interp D) :
+ CT_Q -> MP ->
+ Discrete D -> (forall ax, PA ax -> ⊨ ax) ->
+ (forall d, ~~Dec(T.Div_nat D I d)) <-> (forall e, std e).
+Proof.
+  intros; now apply T.Tennenbaum2.
+Qed.
+
+
+Theorem Makholm  {Δ0 : Delta0} D (I : interp D) ψ :
+  T.obj_Insep ->
+  (forall ax, PA ax -> ⊨ ax) ->
+  T.prime_form ψ /\ obj_Coding ψ ->
+  nonStd D -> exists d, ~ Dec (T.Div_nat D I d).
+Proof.
+  intros; eapply T.Makholm; eauto.
+Qed.
+
+
+Theorem Makholm' {Δ0 : Delta0} D (I : interp D) ψ :
+  T.obj_Insep ->
+  (forall ax, PA ax -> ⊨ ax) ->
+  T.prime_form ψ /\ obj_Coding ψ ->
+  (forall e, ~~std e) <-> (forall d, ~~Dec (T.Div_nat D I d)).
+Proof.
+  intros; eapply T.Makholm'; eauto.
+Qed.
+
+
+Lemma Tennenbaum3 {Δ0 : Delta0} D (I : interp D) :
+  (UC nat bool) -> T.obj_Insep ->  
+  (forall ax, PA ax -> ⊨ ax) ->
+  (exists ψ, T.prime_form ψ /\ (obj_Coding ψ)) ->   
+  ~ nonStd D.
+Proof.
+  intros; now apply T.Tennenbaum3.
+Qed.
+
+
+Theorem McCarty {Δ0 : Delta0} D (I : interp D) :
+  MP -> (forall X, UC X bool) ->
+  (forall ax, PA ax -> ⊨ ax) ->
+  (exists ψ, T.prime_form ψ /\ obj_Coding ψ) -> T.obj_Insep -> 
+  forall e, std e.
+Proof.
+  intros; now apply T.McCarty.
+Qed.
+
+
+
+
+

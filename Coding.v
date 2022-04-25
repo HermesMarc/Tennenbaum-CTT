@@ -15,8 +15,6 @@ Definition binary alpha := bounded 2 alpha.
 
 Section Model.
 
-  Context {Δ0 : Delta0}.
-
   Variable D : Type.
   Variable I : interp D.
   Notation "⊨ phi" := (forall rho, rho ⊨ phi) (at level 21).
@@ -24,38 +22,6 @@ Section Model.
 
   Notation "N⊨ phi" := (forall rho, @sat _ _ nat interp_nat _ rho phi) (at level 40).
   Notation "x 'i⧀' y" := (exists d : D, y = iσ (x i⊕ d) ) (at level 40).
-
-  Variable ψ : form.
-  Variable Hψ : binary ψ /\ (forall x, Q ⊢I ∀ ψ[up (num x)..] <--> $0 == num (Irred x) ).
-
-
-  Definition div e d := exists k : D, e i⊗ k = d.
-  Definition div_num n (d : D) := exists e, inu n i⊗ e = d.
-  Definition Div_nat (d : D) := fun n => div_num n d.
-  Definition div_pi n a :=  (inu n .: (fun _ => a)) ⊨ (∃ (ψ ∧ ∃ $1 ⊗ $0 == $3)).
-
-
-  Lemma ψ_repr x d rho : 
-    (d .: inu x .: rho) ⊨ ψ <-> d = inu (Irred x).
-  Proof.
-    destruct Hψ as (_ & H).
-    specialize (H x).
-    apply soundness in H.
-    specialize (H D I). cbn -[Q] in H.
-    setoid_rewrite eval_num in H.
-    rewrite <-switch_up_num.
-    apply H.
-    intros ax Hax. apply axioms. now constructor.
-  Qed.
-
-
-  Lemma ψ_equiv n a : div_pi n a <-> div_num (Irred n) a.
-  Proof.
-    unfold div_pi. cbn. split.
-    - intros [d [->%ψ_repr H]]. apply H.
-    - intros. exists (inu (Irred n)). rewrite ψ_repr. now split.
-  Qed.
-
 
 
 Section Facts.
@@ -145,8 +111,6 @@ Qed.
 End Facts.
 
 
-
-
 Lemma stdModel_equiv :
   stdModel D <-> exists phi, unary phi /\ (forall e, std e <-> forall ρ, (e .: ρ) ⊨ phi).
 Proof.
@@ -173,7 +137,6 @@ Section Overspill.
   Hypothesis Halpha : unary alpha.
 
   Variable nStd : ~ stdModel D.
-  Variable stable_std : forall x, stable (std x).
 
   Corollary Overspill :
     (forall e, std e -> (forall rho, (e.:rho) ⊨ alpha) ) -> ~ (forall e, (forall rho, (e.:rho) ⊨ alpha) -> std e ).
@@ -185,9 +148,10 @@ Section Overspill.
   
   
   Lemma Overspill_DN' :
+    (forall x, stable (std x)) ->
     (forall e, std e -> (forall rho, (e.:rho) ⊨ alpha) ) ->  ~ ~ exists e, ~ std e /\ (forall rho, (e.:rho) ⊨ alpha).
   Proof.
-    intros H1 H2. apply Overspill in H1. apply H1. intros e.
+    intros stable_std H1 H2. apply Overspill in H1. apply H1. intros e.
     intros H. apply stable_std. intros He. apply H2. now exists e.
   Qed.
 
@@ -201,10 +165,21 @@ Section Overspill.
   Qed.
 
   Lemma Overspill_DN :
+    (forall x, stable (std x)) ->
     (forall n rho, ((inu n).:rho) ⊨ alpha) ->  ~ ~ exists e, ~ std e /\ (forall rho, (e.:rho) ⊨ alpha).
   Proof.
+    intros dne.
     setoid_rewrite on_std_equiv.
-    apply Overspill_DN'.
+    now apply Overspill_DN'.
+  Qed.
+
+
+  Lemma Overspill_DNE :
+    DNE ->
+    (forall n rho, ((inu n).:rho) ⊨ alpha) ->  exists e, ~ std e /\ (forall rho, (e.:rho) ⊨ alpha).
+  Proof.
+    intros dne H.
+    now apply dne, Overspill_DN.
   Qed.
 
 
@@ -213,7 +188,38 @@ End Overspill.
 (** * Coding Lemmas *)
 Section Coding.
 
-  
+  Variable ψ : form.
+  Variable Hψ : binary ψ /\ (forall x, Q ⊢I ∀ ψ[up (num x)..] <--> $0 == num (Irred x) ).
+
+
+  Definition div e d := exists k : D, e i⊗ k = d.
+  Definition div_num n (d : D) := exists e, inu n i⊗ e = d.
+  Definition Div_nat (d : D) := fun n => div_num n d.
+  Definition div_pi n a :=  (inu n .: (fun _ => a)) ⊨ (∃ (ψ ∧ ∃ $1 ⊗ $0 == $3)).
+
+
+  Lemma ψ_repr x d rho : 
+    (d .: inu x .: rho) ⊨ ψ <-> d = inu (Irred x).
+  Proof.
+    destruct Hψ as (_ & H).
+    specialize (H x).
+    apply soundness in H.
+    specialize (H D I). cbn -[Q] in H.
+    setoid_rewrite eval_num in H.
+    rewrite <-switch_up_num.
+    apply H.
+    intros ax Hax. apply axioms. now constructor.
+  Qed.
+
+
+  Lemma ψ_equiv n a : div_pi n a <-> div_num (Irred n) a.
+  Proof.
+    unfold div_pi. cbn. split.
+    - intros [d [->%ψ_repr H]]. apply H.
+    - intros. exists (inu (Irred n)). rewrite ψ_repr. now split.
+  Qed.
+
+
   (** In the standard model, up to some bound. *)
   Lemma Coding_nat A n :
     ~ ~ exists c, forall u, (u < n -> A u <-> Mod (Irred u) c = 0) /\ (Mod (Irred u) c = 0 -> u < n).

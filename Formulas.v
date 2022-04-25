@@ -266,14 +266,14 @@ End Closed.
 Notation "N⊨ phi" := (forall rho, @sat _ _ nat interp_nat _ rho phi) (at level 40).
 
 
-(** ** Σ1 Completeness  *)
+(** ** sigma1 Completeness  *)
 Section Sigma1.
 
   Variable α : form.
   Variable binary_α : binary α.
   Variable delta0_α : delta0 α.
 
-  Lemma Σ1_complete' n :
+  Lemma sigma1_complete' n :
     N⊨ (∃ α)[(num n)..] -> exists m, Q ⊢I α[up (num n)..][(num m)..].
   Proof.
     intros [m Hm]%(fun h => h (fun _ => 0)).
@@ -290,10 +290,10 @@ Section Sigma1.
       now apply delta0_subst.
   Qed.
 
-  Lemma Σ1_complete n :
+  Lemma sigma1_complete n :
     N⊨ (∃ α)[(num n)..] -> Q ⊢I (∃ α)[(num n)..].
   Proof.
-    intros [m Hm]%Σ1_complete'.
+    intros [m Hm]%sigma1_complete'.
     cbn.
     change (∃ α[up (num n)..]) with (Peano.exist_times 1 (α[up (num n)..])).
     eapply subst_exist_prv; eauto.
@@ -303,11 +303,11 @@ Section Sigma1.
     apply closed_num.
   Qed.
 
-  Lemma Σ1_complete'' n :
+  Lemma sigma1_complete'' n :
     Q ⊢I (∃ α)[(num n)..] -> exists m, Q ⊢I α[up (num n)..][(num m)..].
   Proof.
     intros H%soundness.
-    apply Σ1_complete'.
+    apply sigma1_complete'.
     specialize (H nat interp_nat).
     intros ?. apply H.
     intros ??. now apply Q_std_axioms.
@@ -322,7 +322,7 @@ Section Sigma1.
   Variable ternary_α : bounded 3 α.
   Variable delta0_α : delta0 α.
 
-  Lemma Σ1_ternary_complete' n :
+  Lemma sigma1_ternary_complete' n :
     N⊨ (∃∃α)[(num n)..] -> exists a b, Q ⊢I α[up (up (num n)..)][(num b)..][(num a)..].
   Proof.
     intros [a [b Hab]]%(fun h => h (fun _ => 0)).
@@ -341,10 +341,10 @@ Section Sigma1.
       now apply delta0_subst.
   Qed.
 
-  Lemma Σ1_ternary_complete n :
+  Lemma sigma1_ternary_complete n :
     N⊨ (∃∃α)[(num n)..] -> Q ⊢I (∃∃α)[(num n)..].
   Proof.
-    intros (a & b & Hab)%Σ1_ternary_complete'.
+    intros (a & b & Hab)%sigma1_ternary_complete'.
     cbn.
     change (∃∃ α[up (up (num n)..)]) with (Peano.exist_times 2 (α[up (up (num n)..)])).
     rewrite subst_comp in Hab.
