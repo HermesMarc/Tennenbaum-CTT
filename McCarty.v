@@ -14,6 +14,24 @@ Section Model.
   Notation "N⊨ phi" := (forall rho, @sat _ _ nat interp_nat _ rho phi) (at level 40).
   Notation "x 'i⧀' y" := (exists d : D, y = iσ (x i⊕ d) ) (at level 40).
 
+
+  (*  The double negation ¬¬(A ∨ ¬A) of a LEM instance can be proven
+      intuitionistically. This can be generalized to finitely many instances.
+      So for example, given a predicate [p] over nat it is possible to show that
+      B instances a provable:
+      
+      ¬¬( (p 0 ∨ ¬p 0) ∧ ... ∧ (p B ∨ ¬p B) )
+
+      Properly written with a quantifier this is expressed by:
+      
+      ¬¬ ∀ x < S B. (p x ∨ ¬p x)
+      
+      In the following we show this for unary and binary formulas in 
+      models of PA and then apply it in the proof of a variant of
+      Tennenbaum's Theorem.
+   *)
+
+
   Lemma bounded_definite_unary'' ϕ :
     bounded 1 ϕ -> forall x, ~ ~ forall y, y i⧀ x -> (fun _ => y) ⊨ ϕ \/ ~ (fun _ => y) ⊨ ϕ.
   Proof.

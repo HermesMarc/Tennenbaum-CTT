@@ -138,6 +138,10 @@ Hint Constructors prv : core.
 
 (** ** Soundness *)
 
+(*  Below, soundness of first-order logic with respect to Tarski semantics is established.
+    This is first done for the intuitionistic deduction system. Then with the additional
+    assumption of LEM also for the classical system. 
+ *)
 Section Soundness.
 
   Context {Σ_funcs : funcs_signature}.

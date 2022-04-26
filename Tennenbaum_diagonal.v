@@ -16,7 +16,7 @@ Definition binary α := bounded 2 α.
 
 Section Model.
 
-  Context {Δ0 : Delta0}.
+  Context {Δ1 : Delta1}.
 
   Variable D : Type.
   Variable I : interp D.
@@ -115,10 +115,10 @@ Section Model.
       it allows decidable predicates to be coded.
    *)
   Lemma Coding_Dec p :
-    RT_strong -> Stable std -> ~ stdModel D ->
+    CT_Q -> Stable std -> ~ stdModel D ->
     Dec p -> ~~ exists c, forall n, p n <-> div_pi n c.
   Proof.
-    intros rt ? notStd Dec_p.
+    intros rt%CT_RTs ? notStd Dec_p.
     destruct (rt _ Dec_p) as [ϕ (b1 & _ & H1 & H2)].
     unshelve refine (let H:= Coding_nonStd_unary _ _ _ _ Hψ _ _ (∃ ϕ) _ in _); auto.
     - now solve_bounds.
@@ -159,11 +159,16 @@ Section Model.
         now rewrite Hk.
   Qed.
 
-
+  (*  We can now use the above coding lemma in combination with RT 
+      to give a diagonal argument which shows that enumerable and  
+      discrete PA models must potentially be standard.             
+      The double negation can actually also be eliminated, and this
+      is done in Variants.v, where the needed lemmas are shown.    
+   *)
   Theorem Tennenbaum_diagonal :
     CT_Q -> MP -> Enumerable D -> Discrete D -> ~~ forall e, std e.
   Proof.
-    intros rt%CT_RTs mp enum eq notStd.
+    intros ct mp enum eq notStd.
     specialize (dec_div enum eq) as [dec_div].
     specialize enum as [G HG].
     pose (g n := match G n with None => i0 | Some d => d end).
@@ -183,7 +188,9 @@ Section Model.
       tauto.
   Qed.
 
-
+  (*  We can still establish the same result, with the weaker
+      assumption of WCT_Q.
+   *)
   Theorem Tennenbaum_diagonal' :
     WCT_Q -> MP -> Enumerable D -> Discrete D -> ~ exists e, ~std e.
   Proof.

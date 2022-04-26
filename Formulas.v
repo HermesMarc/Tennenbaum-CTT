@@ -60,14 +60,14 @@ Qed.
 
 
 
-(** * Δ0 Formulas. *)
+(** * Δ1 Formulas. *)
 
-Class Delta0 : Type :=  
-  mk_Delta0{ 
-    delta0 : form -> Prop
-  ; delta0_Q : forall ϕ s, delta0 ϕ -> bounded 0 (ϕ[s]) -> Q ⊢I ϕ[s] \/ Q ⊢I ¬ ϕ[s]
-  ; delta0_HA : forall ϕ, delta0 ϕ -> PA ⊢TI ϕ ∨ ¬ ϕ
-  ; delta0_subst : forall ϕ s, delta0 ϕ -> delta0 (ϕ[s])
+Class Delta1 : Type :=  
+  mk_Delta1{ 
+    delta1 : form -> Prop
+  ; delta1_Q : forall ϕ s, delta1 ϕ -> bounded 0 (ϕ[s]) -> Q ⊢I ϕ[s] \/ Q ⊢I ¬ ϕ[s]
+  ; delta1_HA : forall ϕ, delta1 ϕ -> PA ⊢TI ϕ ∨ ¬ ϕ
+  ; delta1_subst : forall ϕ s, delta1 ϕ -> delta1 (ϕ[s])
   }.
 
 
@@ -137,15 +137,15 @@ Proof.
 Qed.
 
 
-Section Delta0.
+Section Delta1.
 
-  Context {Δ0 : Delta0}.
+  Context {Δ1 : Delta1}.
 
 Lemma Q_neg_equiv ϕ s : 
-  delta0 ϕ -> bounded 0 ϕ[s] -> (~ Q ⊢I ϕ[s]) <-> Q ⊢I ¬ ϕ[s].
+  delta1 ϕ -> bounded 0 ϕ[s] -> (~ Q ⊢I ϕ[s]) <-> Q ⊢I ¬ ϕ[s].
 Proof.
   intros d0. split.
-    - intros. destruct (delta0_Q ϕ s); tauto.
+    - intros. destruct (delta1_Q ϕ s); tauto.
     - intros H1 H2.
       apply PA_consistent.
       exists Q. split. intros.
@@ -161,23 +161,23 @@ Section Closed.
   
   Variable phi : form.
   Variable Hcl : bounded 0 phi.
-  Variable H0 : delta0 phi.
+  Variable H0 : delta1 phi.
 
   Variable D : Type.
   Variable I : interp D.
   Variable axioms : forall ax, PA ax -> ⊨ ax. 
 
 
-  Theorem Q_dec_closed_delta0 :
+  Theorem Q_dec_closed_delta1 :
     Q ⊢I phi \/ Q ⊢I ¬ phi.
   Proof.
     setoid_rewrite <-subst_var. cbn.
-    apply delta0_Q; auto. 
+    apply delta1_Q; auto. 
     now rewrite subst_var.
   Qed.
 
 
-  Corollary Q_neg_equiv_delta0 : 
+  Corollary Q_neg_equiv_delta1 : 
     (~ Q ⊢I phi) <-> Q ⊢I ¬ phi.
   Proof.
     setoid_rewrite <-subst_var. cbn.
@@ -186,9 +186,9 @@ Section Closed.
   Qed.
 
 
-  Corollary dec_closed_delta0: PA ⊢TI phi \/ PA ⊢TI ¬ phi.
+  Corollary dec_closed_delta1: PA ⊢TI phi \/ PA ⊢TI ¬ phi.
   Proof.
-    destruct Q_dec_closed_delta0 as [H|H].
+    destruct Q_dec_closed_delta1 as [H|H].
     - left. exists Q. split.
       intros; now constructor.
       apply H.
@@ -198,10 +198,10 @@ Section Closed.
   Qed.
 
 
-  Corollary neg_equiv_delta0 : (~ PA ⊢TI phi) <-> PA ⊢TI ¬ phi.
+  Corollary neg_equiv_delta1 : (~ PA ⊢TI phi) <-> PA ⊢TI ¬ phi.
   Proof.
     split.
-    - intros. now destruct dec_closed_delta0.
+    - intros. now destruct dec_closed_delta1.
     - intros [Γ1 []] [Γ2 []].
       apply PA_consistent.
       exists (Γ1 ++ Γ2)%list.
@@ -211,38 +211,38 @@ Section Closed.
   Qed.
 
 
-  (** ** Δ0 Completeness  *)
-  Lemma delta0_complete rho : 
+  (** ** Δ1 Completeness  *)
+  Lemma delta1_complete rho : 
     sat interp_nat rho phi -> PA ⊢TI phi.
   Proof.
-    intros H. destruct dec_closed_delta0 as [C|C]. assumption.
+    intros H. destruct dec_closed_delta1 as [C|C]. assumption.
     specialize (tsoundness C interp_nat rho) as F.
     exfalso. apply F. apply PA_std_axioms. apply H.
   Qed.
 
-  Lemma Q_delta0_complete rho : 
+  Lemma Q_delta1_complete rho : 
     sat interp_nat rho phi -> Q ⊢I phi.
   Proof.
-    intros H. destruct Q_dec_closed_delta0 as [C|C]. assumption.
+    intros H. destruct Q_dec_closed_delta1 as [C|C]. assumption.
     specialize (soundness C interp_nat rho) as F.
     exfalso. apply F.
     apply Q_std_axioms. apply H.
   Qed.
 
 
-  Lemma delta0_complete' rho : 
+  Lemma delta1_complete' rho : 
     sat I rho phi -> PA ⊢TI phi.
   Proof.
-    intros H. destruct dec_closed_delta0 as [C|C]. assumption.
+    intros H. destruct dec_closed_delta1 as [C|C]. assumption.
     specialize (tsoundness C I rho) as F.
     exfalso. apply F. intuition. apply H.
   Qed.
 
 
-  Lemma Q_delta0_complete' rho : 
+  Lemma Q_delta1_complete' rho : 
     sat I rho phi -> Q ⊢I phi.
   Proof.
-    intros H. destruct Q_dec_closed_delta0 as [C|C]. assumption.
+    intros H. destruct Q_dec_closed_delta1 as [C|C]. assumption.
     specialize (soundness C I rho) as F.
     exfalso. apply F. intros ??. apply axioms.
     now constructor.
@@ -250,12 +250,12 @@ Section Closed.
   Qed.
 
 
-  (** ** Δ0 Absolutness *)
-  Lemma delta0_absolutness' rho : 
+  (** ** Δ1 Absolutness *)
+  Lemma delta1_absolutness' rho : 
     sat I rho phi -> PA⊨ phi.
   Proof.
     intros H. apply tsoundness.
-    destruct dec_closed_delta0 as [C|C]. assumption.
+    destruct dec_closed_delta1 as [C|C]. assumption.
     specialize (tsoundness C I rho) as F.
     exfalso. apply F. intuition. apply H.
   Qed.
@@ -271,14 +271,14 @@ Section Sigma1.
 
   Variable α : form.
   Variable binary_α : binary α.
-  Variable delta0_α : delta0 α.
+  Variable delta1_α : delta1 α.
 
   Lemma sigma1_complete' n :
     N⊨ (∃ α)[(num n)..] -> exists m, Q ⊢I α[up (num n)..][(num m)..].
   Proof.
     intros [m Hm]%(fun h => h (fun _ => 0)).
     rewrite <-switch_nat_num in Hm. exists m.
-    eapply Q_delta0_complete; eauto.
+    eapply Q_delta1_complete; eauto.
     - eapply subst_bound; eauto.
       eapply subst_bound; eauto.
       intros [|[]]; solve_bounds; cbn.
@@ -287,7 +287,7 @@ Section Sigma1.
       intros [|]; solve_bounds; cbn.
       apply closed_num.
     - rewrite subst_comp.
-      now apply delta0_subst.
+      now apply delta1_subst.
   Qed.
 
   Lemma sigma1_complete n :
@@ -320,14 +320,14 @@ Section Sigma1.
 
   Variable α : form.
   Variable ternary_α : bounded 3 α.
-  Variable delta0_α : delta0 α.
+  Variable delta1_α : delta1 α.
 
   Lemma sigma1_ternary_complete' n :
     N⊨ (∃∃α)[(num n)..] -> exists a b, Q ⊢I α[up (up (num n)..)][(num b)..][(num a)..].
   Proof.
     intros [a [b Hab]]%(fun h => h (fun _ => 0)).
     rewrite <-!switch_nat_num in Hab. exists a, b.
-    eapply Q_delta0_complete; eauto.
+    eapply Q_delta1_complete; eauto.
     - eapply subst_bound with (N:=1); eauto.
       eapply subst_bound with (N:=2); eauto.
       eapply subst_bound with (N:=3); eauto.
@@ -338,7 +338,7 @@ Section Sigma1.
       intros [|]; solve_bounds; cbn.
       apply closed_num.
     - rewrite !subst_comp.
-      now apply delta0_subst.
+      now apply delta1_subst.
   Qed.
 
   Lemma sigma1_ternary_complete n :
@@ -357,4 +357,4 @@ Section Sigma1.
 
 End Sigma1.
 
-End Delta0.
+End Delta1.

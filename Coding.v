@@ -26,6 +26,16 @@ Section Model.
 
 Section Facts.
 
+
+(*  We show some facts about standard numbers. Namely:
+    - If x + y is standard, then so are x and y.
+    - If x * y =/= 0 is standard, then so are x and y.
+    - The embedding of nat into a PA model preserves the
+      order on natural numbers.
+    - A non-standard number is bigger than any natural number.   
+ *)
+
+
 Lemma std_add x y : 
   std (x i⊕ y) -> std x /\ std y.
 Proof.
@@ -111,6 +121,12 @@ Qed.
 End Facts.
 
 
+
+(*  The following Lemma shows that if there is a formula which
+    is satisfied only by the standard elements of a PA model,
+    then the model is already the standard model.
+ *)
+
 Lemma stdModel_equiv :
   stdModel D <-> exists phi, unary phi /\ (forall e, std e <-> forall ρ, (e .: ρ) ⊨ phi).
 Proof.
@@ -130,6 +146,14 @@ Proof.
 Qed.
 
 (** * Overspill *)
+
+(*  From the above we can conclude that if the model is not standard 
+    and a formula is satisfied for every standard element, then it cannot 
+    only be satisfied on standard elements. 
+
+    Given further assumptions, this can even gives us the existence of a
+    non-standard element.
+ *)
 
 Section Overspill.
 
@@ -186,8 +210,14 @@ Section Overspill.
 End Overspill.
 
 (** * Coding Lemmas *)
+
+
+
 Section Coding.
 
+  (*  We assume that we have a formula ψ representing an injective function 
+      which only produces prime numbers.
+   *)
   Variable ψ : form.
   Variable Hψ : binary ψ /\ (forall x, Q ⊢I ∀ ψ[up (num x)..] <--> $0 == num (Irred x) ).
 
@@ -197,7 +227,7 @@ Section Coding.
   Definition Div_nat (d : D) := fun n => div_num n d.
   Definition div_pi n a :=  (inu n .: (fun _ => a)) ⊨ (∃ (ψ ∧ ∃ $1 ⊗ $0 == $3)).
 
-
+  
   Lemma ψ_repr x d rho : 
     (d .: inu x .: rho) ⊨ ψ <-> d = inu (Irred x).
   Proof.
@@ -221,6 +251,9 @@ Section Coding.
 
 
   (** In the standard model, up to some bound. *)
+  (*  This shows that we can potentially get a code representing any
+      predicate on natural numbers up to some bound.
+   *)
   Lemma Coding_nat A n :
     ~ ~ exists c, forall u, (u < n -> A u <-> Mod (Irred u) c = 0) /\ (Mod (Irred u) c = 0 -> u < n).
   Proof.
@@ -261,7 +294,9 @@ Section Coding.
         ++ intros H%Ha. tauto.
   Qed.
 
-
+  (*  The same as above, but if the predicate is definite, we get not only
+      potential existence of a code, but actual existence.
+   *)
   Lemma Coding_nat_Definite A n :
     Definite A -> exists c, forall u, (u < n -> A u <-> Mod (Irred u) c = 0) /\ (Mod (Irred u) c = 0 -> u < n).
   Proof.
@@ -322,6 +357,10 @@ Section Coding.
   Qed.
 
   (** In an arbitrary model, up to some bound. *)
+  (*  By using the coding lemma for natural numbers, we can now
+      similarly verify that formulas can be coded in arbitrary 
+      models of PA. Here, we show this for unary and binary formulas.
+   *)
   Lemma Coding_model_unary alpha : 
     unary alpha -> 
     forall n rho, rho ⊨ ¬ ¬ ∃ ∀ $0 ⧀ (num n) --> alpha <--> ∃ (ψ ∧ ∃ $1 ⊗ $0 == $3).
@@ -381,7 +420,9 @@ Section Coding.
     Unshelve. intros _. exact i0.
   Qed.
 
-
+  (*  We specialize the above results for the case where the formulas 
+      are definite. It is then possible to get rid of the double negations.
+   *)
   Lemma Coding_model_binary_Definite alpha : 
     binary alpha -> (forall b u, definite (forall rho, (inu u .: b .: rho) ⊨ alpha )) ->
     forall n rho, rho ⊨ ∀ ∃ ∀ $0 ⧀ (num n) --> alpha[up $1..] <--> ∃ (ψ ∧ ∃ $1 ⊗ $0 == $3).
@@ -426,6 +467,12 @@ Section Coding.
 Section notStd.
 
   (** In a non-standard model. *)
+
+  (*  Above we have established coding results for arbitrary PA models.
+      We will now focus on the special case where the model is not standard.
+      Using Overspill we can eliminate the bound on the coding; in a non-standard
+      model, we can find elements which code the entirety of a predicate.
+   *)
 
   Variable notStd : ~ stdModel D.
   Variable stable_std : forall x, stable (std x).

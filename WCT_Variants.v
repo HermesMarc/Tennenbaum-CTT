@@ -5,18 +5,29 @@ Notation "⊨ phi" := (forall rho, rho ⊨ phi) (at level 21).
 
 (** * Verification that all variants can be derived from WCT_Q. *)
 
+(*  Statements are formatted rougly as follows:
+
+    Lemma Name (Parameters) :
+      Logical Assumptions ->
+      Assumptions about the Model ->
+      other Assumptions ->
+      Conclusion.
+    Proof. [...] Qed.
+ *)
+
+
 Module T.
 Section Variants.
 
 Instance ff : falsity_flag := falsity_on.
-Context {Δ0 : Delta0}.
+Context {Δ1 : Delta1}.
 
 Variable D : Type.
 Variable I : interp D.
 Variable axioms : forall ax, PA ax -> ⊨ ax.
 
 Hypothesis wct : WCT_Q.
-Hypothesis delta0_definite : forall phi, delta0 phi -> Q ⊢I phi ∨ ¬ phi.
+Hypothesis delta1_definite : forall phi, delta1 phi -> Q ⊢I phi ∨ ¬ phi.
 Definition obj_Insep := exists α β, def_obj_Insep α β.
 
 Definition div e d := exists k : D, e i⊗ k = d.
@@ -197,30 +208,22 @@ End T.
 
 (*  Below, we list all major results again in a way that makes
     all their assumptions explicit.
-
-    We format the statements rougly as:
-
-    Lemma Name (Parameters) :
-      Logical Assumptions ->
-      Assumptions about the Model ->
-      other Assumptions ->
-      Conclusion.
-    Proof. [...] Qed.
  *)
 
+Definition PA_model D I := forall ax, PA ax -> forall rho, @sat _ _ D I _ rho ax.
 
-Theorem Tennenbaum2 {Δ0 : Delta0} D (I : interp D) :
+Theorem Tennenbaum2 {Δ1 : Delta1} D (I : interp D) :
  WCT_Q -> MP ->
- Discrete D -> (forall ax, PA ax -> ⊨ ax) ->
+ PA_model D I -> Discrete D ->
  (forall d, ~~Dec(T.Div_nat D I d)) <-> (forall e, std e).
 Proof.
   intros; now apply T.Tennenbaum2.
 Qed.
 
 
-Theorem Makholm  {Δ0 : Delta0} D (I : interp D) ψ :
+Theorem Makholm  {Δ1 : Delta1} D (I : interp D) ψ :
   WCT_Q -> T.obj_Insep ->
-  (forall ax, PA ax -> ⊨ ax) ->
+  PA_model D I ->
   T.prime_form ψ /\ obj_Coding ψ ->
   nonStd D -> exists d, ~ Dec (T.Div_nat D I d).
 Proof.
@@ -228,9 +231,9 @@ Proof.
 Qed.
 
 
-Lemma Tennenbaum3 {Δ0 : Delta0} D (I : interp D) :
+Lemma Tennenbaum3 {Δ1 : Delta1} D (I : interp D) :
   WCT_Q -> (UC nat bool) -> T.obj_Insep ->  
-  (forall ax, PA ax -> ⊨ ax) ->
+  PA_model D I ->
   (exists ψ, T.prime_form ψ /\ (obj_Coding ψ)) ->
   ~ nonStd D.
 Proof.
@@ -238,9 +241,9 @@ Proof.
 Qed.
 
 
-Theorem McCarty {Δ0 : Delta0} D (I : interp D) :
+Theorem McCarty {Δ1 : Delta1} D (I : interp D) :
   WCT_Q -> MP -> (forall X, UC X bool) ->
-  (forall ax, PA ax -> ⊨ ax) ->
+  PA_model D I ->
   (exists ψ, T.prime_form ψ /\ obj_Coding ψ) -> T.obj_Insep -> 
   forall e, std e.
 Proof.

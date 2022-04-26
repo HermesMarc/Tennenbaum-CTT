@@ -11,7 +11,7 @@ Notation "x ∣ y" := (exists k, x * k = y) (at level 50).
 
 Section Model.
 
-  Context {Δ0 : Delta0}.
+  Context {Δ1 : Delta1}.
 
   Variable D : Type.
   Variable I : interp D.
@@ -59,7 +59,7 @@ Section Model.
 
   Definition Insep :=
     exists α β,
-      bounded 3 α /\ inhabited(delta0 α) /\ bounded 3 β /\ inhabited(delta0 β) /\ 
+      bounded 3 α /\ inhabited(delta1 α) /\ bounded 3 β /\ inhabited(delta1 β) /\ 
       (forall n, ~ Q ⊢I ((∃∃α) ∧ (∃∃β))[(num n)..] ) /\ 
       (forall G, Dec G -> (forall n, Q ⊢I (∃∃α)[(num n)..] -> G n) -> 
         (forall n, ~ (Q ⊢I (∃∃β)[(num n)..] /\ G n)) -> False).
@@ -140,12 +140,12 @@ Section Model.
 
 
 
-  Lemma delta0_ternary_definite phi :
-    delta0 phi -> bounded 3 phi -> ⊨ ∀∀∀ phi ∨ ¬ phi.
+  Lemma delta1_ternary_definite phi :
+    delta1 phi -> bounded 3 phi -> ⊨ ∀∀∀ phi ∨ ¬ phi.
   Proof.
     intros d0 b3.
     intros rho. cbn. intros ???.
-    specialize (delta0_HA phi d0) as d0'.
+    specialize (delta1_HA phi d0) as d0'.
     refine (let H := tsoundness d0' _  in _).
     apply H. intros ??.
     now apply axioms.
@@ -195,12 +195,12 @@ Section Model.
 
 
   Lemma LEM_bounded_exist_ternary {phi} sigma : 
-    delta0 phi -> bounded 3 phi -> forall b x, (x .: b .: sigma) ⊨ (∃∃ $0 ⧀ $3 ∧ $1 ⧀ $3 ∧ phi) \/ ~ (x .: b .: sigma) ⊨ (∃∃ $0 ⧀ $3 ∧ $1 ⧀ $3 ∧ phi).
+    delta1 phi -> bounded 3 phi -> forall b x, (x .: b .: sigma) ⊨ (∃∃ $0 ⧀ $3 ∧ $1 ⧀ $3 ∧ phi) \/ ~ (x .: b .: sigma) ⊨ (∃∃ $0 ⧀ $3 ∧ $1 ⧀ $3 ∧ phi).
   Proof.
     intros d0 b3 b y.
     unshelve refine (let D' := LEM_bounded_exist_ternary' (∃ $0 ⧀ $3 ∧ phi) _ _ in _); auto.
     - apply LEM_bounded_exist_ternary'; auto.
-      now apply delta0_ternary_definite.
+      now apply delta1_ternary_definite.
     - repeat solve_bounds. eapply bounded_up; eauto.
     - specialize (D' sigma b b y); fold sat in *.
       destruct D' as [H|nH].
@@ -349,7 +349,7 @@ Section Model.
         rewrite !sat_comp. rewrite !sat_comp in H31.
         eapply bound_ext. apply Ha1. 2 : apply H31.
         intros [|[|[]]]; cbn; rewrite ?num_subst, ?eval_num; try reflexivity; try lia.
-        eapply delta0_absolutness' in H.
+        eapply delta1_absolutness' in H.
         rewrite !switch_nat_num in H.
         apply H.
         * eapply subst_bound with (N:=1).
@@ -359,7 +359,7 @@ Section Model.
           rewrite !num_subst. apply closed_num.
           intros[|[]]; cbn; solve_bounds. apply closed_num.
           intros[]; cbn; solve_bounds. apply closed_num.
-        * rewrite !subst_comp. now apply delta0_subst.
+        * rewrite !subst_comp. now apply delta1_subst.
         * apply axioms.
         * intros ??. now apply PA_std_axioms.
       + apply sigma1_ternary_complete; auto.
@@ -380,7 +380,7 @@ Section Model.
         rewrite !sat_comp. rewrite !sat_comp in H53.
         eapply bound_ext. apply Hb1. 2 : apply H53.
         intros [|[|[]]]; cbn; rewrite ?num_subst, ?eval_num; try reflexivity; try lia.
-        eapply delta0_absolutness' in H.
+        eapply delta1_absolutness' in H.
         rewrite !switch_nat_num in H.
         apply H.
         * eapply subst_bound with (N:=1).
@@ -390,7 +390,7 @@ Section Model.
           rewrite !num_subst. apply closed_num.
           intros[|[]]; cbn; solve_bounds. apply closed_num.
           intros[]; cbn; solve_bounds. apply closed_num.
-        * rewrite !subst_comp. now apply delta0_subst.
+        * rewrite !subst_comp. now apply delta1_subst.
         * apply axioms.
         * intros ??. now apply PA_std_axioms.
     Unshelve. all: auto.

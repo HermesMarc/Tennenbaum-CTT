@@ -18,7 +18,7 @@ Definition binary α := bounded 2 α.
 Section ChurchThesis.
 
 Instance ff : falsity_flag := falsity_on.
-Context {Δ0 : Delta0}.
+Context {Δ1 : Delta1}.
 
 (** * Church's Thesis *)
 
@@ -33,24 +33,24 @@ Context {Δ0 : Delta0}.
  *)
 
 Definition represents ϕ f := forall x, Q ⊢I ∀ ϕ[up (num x)..] <--> $0 == num (f x).
-Definition CT_Q := forall f : nat -> nat, exists ϕ, bounded 3 ϕ /\ inhabited(delta0 ϕ) /\ represents (∃ ϕ) f.
+Definition CT_Q := forall f : nat -> nat, exists ϕ, bounded 3 ϕ /\ inhabited(delta1 ϕ) /\ represents (∃ ϕ) f.
 
 (*  Weaker Version of CT_Q, where the existence of the formula 
     is only given potentially (i.e. behing a double negation). 
  *)
-Definition WCT_Q := forall f : nat -> nat, ~ ~ exists ϕ, bounded 3 ϕ /\ inhabited(delta0 ϕ) /\ represents (∃ ϕ) f.
+Definition WCT_Q := forall f : nat -> nat, ~ ~ exists ϕ, bounded 3 ϕ /\ inhabited(delta1 ϕ) /\ represents (∃ ϕ) f.
 
 (** Strong Representability *)
 
 Definition strong_repr ϕ (p : nat -> Prop) := (forall x, p x -> Q ⊢I ϕ[(num x)..]) /\ (forall x, ~ p x -> Q ⊢I ¬ϕ[(num x)..]).
-Definition RT_strong := forall p : nat -> Prop, Dec p -> exists ϕ, bounded 2 ϕ /\ inhabited(delta0 ϕ) /\ strong_repr (∃ ϕ) p.
-Definition WRT_strong := forall p : nat -> Prop, Dec p ->  ~ ~ exists ϕ, bounded 2 ϕ /\ inhabited(delta0 ϕ) /\ strong_repr (∃ ϕ) p.
+Definition RT_strong := forall p : nat -> Prop, Dec p -> exists ϕ, bounded 2 ϕ /\ inhabited(delta1 ϕ) /\ strong_repr (∃ ϕ) p.
+Definition WRT_strong := forall p : nat -> Prop, Dec p ->  ~ ~ exists ϕ, bounded 2 ϕ /\ inhabited(delta1 ϕ) /\ strong_repr (∃ ϕ) p.
 
 (** Weak Representability *)
 
 Definition weak_repr ϕ (p : nat -> Prop) := (forall x, p x <-> Q ⊢I ϕ[(num x)..]).
-Definition RT_weak := forall p : nat -> Prop, enumerable p -> exists ϕ, bounded 3 ϕ /\ inhabited(delta0 ϕ) /\ weak_repr (∃∃ ϕ) p.
-Definition WRT_weak := forall p : nat -> Prop, enumerable p -> ~ ~ exists ϕ, bounded 3 ϕ /\ inhabited(delta0 ϕ) /\ weak_repr (∃∃ ϕ) p.
+Definition RT_weak := forall p : nat -> Prop, enumerable p -> exists ϕ, bounded 3 ϕ /\ inhabited(delta1 ϕ) /\ weak_repr (∃∃ ϕ) p.
+Definition WRT_weak := forall p : nat -> Prop, enumerable p -> ~ ~ exists ϕ, bounded 3 ϕ /\ inhabited(delta1 ϕ) /\ weak_repr (∃∃ ϕ) p.
 
 Definition RT := RT_strong /\ RT_weak.
 
@@ -85,7 +85,7 @@ Proof.
   { eapply subst_bound; eauto.
     intros [|[|[]]]; cbn. 1,2,3: try solve_bounds. lia. }
   split.
-  { constructor. now apply delta0_subst. }
+  { constructor. now apply delta1_subst. }
   repeat split.
   all: intros x; specialize (H x).
   all: eapply AllE with (t := num 0) in H; cbn -[Q] in H.
@@ -116,7 +116,7 @@ Proof.
   { eapply subst_bound; eauto.
     intros [|[|[]]]; cbn. 1,2,3: try solve_bounds. lia. }
   split.
-  { constructor. now apply delta0_subst. }
+  { constructor. now apply delta1_subst. }
   repeat split.
   all: intros x; specialize (H x).
   all: eapply AllE with (t := num 0) in H; cbn -[Q] in H.
@@ -145,13 +145,13 @@ Proof.
   exists Φ; split. 2: split.
   - unfold Φ. eapply subst_bound; eauto.
     intros [|[|[]]]; cbn; repeat solve_bounds.
-  - constructor. now apply delta0_subst. 
+  - constructor. now apply delta1_subst. 
   - intros x. rewrite Hf. split.
     + intros [n Hn]. symmetry in Hn.
       apply sigma1_ternary_complete.
       { unfold Φ. eapply subst_bound; eauto.
       intros [|[|[]]]; cbn; repeat solve_bounds. }
-      {unfold Φ. now apply delta0_subst. }
+      {unfold Φ. now apply delta1_subst. }
       exists n. specialize (H n).
       apply soundness in H.
       unshelve refine (let H := (H nat interp_nat (fun _ => 0)) _ in _ ).
@@ -194,13 +194,13 @@ Proof.
   exists Φ; split. 2: split.
   - unfold Φ. eapply subst_bound; eauto.
     intros [|[|[]]]; cbn; repeat solve_bounds.
-  - constructor. now apply delta0_subst. 
+  - constructor. now apply delta1_subst. 
   - intros x. rewrite Hf. split.
     + intros [n Hn]. symmetry in Hn.
       apply sigma1_ternary_complete.
       { unfold Φ. eapply subst_bound; eauto.
       intros [|[|[]]]; cbn; repeat solve_bounds. }
-      {unfold Φ. now apply delta0_subst. }
+      {unfold Φ. now apply delta1_subst. }
       exists n. specialize (H n).
       apply soundness in H.
       unshelve refine (let H := (H nat interp_nat (fun _ => 0)) _ in _ ).

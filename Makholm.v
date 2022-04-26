@@ -12,7 +12,7 @@ Notation "x ∣ y" := (exists k, x * k = y) (at level 50).
 
 Section Model.
 
-  Context {Δ0 : Delta0}.
+  Context {Δ1 : Delta1}.
 
   Variable D : Type.
   Variable I : interp D.
@@ -26,7 +26,7 @@ Section Model.
   Variable ψ : form.
   Variable Hψ : binary ψ /\ (forall x, Q ⊢I ∀ ψ[up (num x)..] <--> $0 == num (Irred x) ).
 
-  Definition obj_Coding := forall α, binary α -> delta0 α -> PA ⊢TI ∀∀∃∀ $0 ⧀ $3 --> (∃ $0 ⧀ $3 ∧ α) <--> ∃ (ψ ∧ ∃ $1 ⊗ $0 == $3). 
+  Definition obj_Coding := forall α, binary α -> delta1 α -> PA ⊢TI ∀∀∃∀ $0 ⧀ $3 --> (∃ $0 ⧀ $3 ∧ α) <--> ∃ (ψ ∧ ∃ $1 ⊗ $0 == $3). 
 
   Hypothesis coding : obj_Coding.
 
@@ -34,7 +34,7 @@ Section Model.
   (** * HA-inseparable formulas. *)
 
   Definition def_obj_Insep α β :=
-    binary α /\ inhabited(delta0 α) /\ binary β /\ inhabited(delta0 β) /\ 
+    binary α /\ inhabited(delta1 α) /\ binary β /\ inhabited(delta1 β) /\ 
       ( PA ⊢TI ¬ ∃ (∃ α) ∧ (∃ β) ) /\ 
       (forall G,
           Dec G -> (forall n, Q ⊢I (∃ α)[(num n)..] -> G n) ->
