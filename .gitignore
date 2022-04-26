@@ -20,6 +20,8 @@
 *.vo
 *.vok
 *.vos
+*.html
+*.css
 .coq-native/
 .csdp.cache
 .lia.cache
