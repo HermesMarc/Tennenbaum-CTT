@@ -65,9 +65,9 @@ Section Model.
         (forall n, ~ (Q ⊢I (∃∃β)[(num n)..] /\ G n)) -> False).
 
   Lemma Insep_ :
-    RT_strong -> Insep'.
+    CT_Q -> Insep'.
   Proof.
-    intros rt.
+    intros rt%CT_RTs.
     exists A, B. repeat split; auto.
     1,2 : apply enumerable_Q_prv.
     { apply Disjoint_AB. }
@@ -84,7 +84,7 @@ Section Model.
     CT_Q -> Insep.
   Proof.
     intros ct.
-    destruct (Insep_ (CT_RTs ct)) as (A & B & HA & HB & disj & H).
+    destruct (Insep_ ct) as (A & B & HA & HB & disj & H).
     destruct ((CT_RTw ct) A HA) as [α (Ha0 & [Ha1] & Hα)],
             ((CT_RTw ct) B HB) as [β (Hb0 & [Hb1] & Hβ)].
     exists α, β. do 4 (split; auto).  
@@ -101,9 +101,9 @@ Section Model.
 
 
   Lemma WInsep_ :
-    WRT_strong -> Insep'.
+    WCT_Q -> Insep'.
   Proof.
-    intros wrt.
+    intros wrt%WCT_WRTs.
     exists A, B. repeat split; auto.
     1,2 : apply enumerable_Q_prv.
     { apply Disjoint_AB. }
@@ -123,7 +123,7 @@ Section Model.
     WCT_Q -> ~~ Insep.
   Proof.
     intros wct.
-    destruct (WInsep_ (WCT_WRTs wct)) as (A & B & HA & HB & disj & H).
+    destruct (WInsep_ wct) as (A & B & HA & HB & disj & H).
     apply (DN_chaining ((WCT_WRTw wct) B HB)), (DN_chaining ((WCT_WRTw wct) A HA)), DN.
     intros [α (Ha0 & [Ha1] & Hα)] [β (Hb0 & [Hb1] & Hβ)].
     exists α, β. do 4 (split; auto).

@@ -10,7 +10,8 @@ Notation "A '<<=' B" := (List.incl A B) (at level 70).
 Notation "x ∣ y" := (exists k, x * k = y) (at level 50).
 
 
-Lemma switch_nat_num α rho (n : nat) : sat interp_nat rho (α[(num n)..]) <-> sat interp_nat (n.:rho) α.
+Lemma switch_nat_num α rho (n : nat) : 
+  sat interp_nat rho (α[(num n)..]) <-> sat interp_nat (n.:rho) α.
 Proof.
   split; intros H.
   - rewrite <- (inu_nat_id n). erewrite <-eval_num. apply sat_single, H.
@@ -62,9 +63,8 @@ Qed.
 
 (** * Δ1 Formulas. *)
 
-Class Delta1 : Type :=  
-  mk_Delta1{ 
-    delta1 : form -> Prop
+Class Delta1 : Type := mk_Delta1
+  { delta1 : form -> Prop
   ; delta1_Q : forall ϕ s, delta1 ϕ -> bounded 0 (ϕ[s]) -> Q ⊢I ϕ[s] \/ Q ⊢I ¬ ϕ[s]
   ; delta1_HA : forall ϕ, delta1 ϕ -> PA ⊢TI ϕ ∨ ¬ ϕ
   ; delta1_subst : forall ϕ s, delta1 ϕ -> delta1 (ϕ[s])

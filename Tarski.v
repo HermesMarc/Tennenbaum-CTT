@@ -53,14 +53,14 @@ Section Tarski.
     Variable domain : Type.
 
     Class interp := B_I
-      {
-        i_f : forall f : syms, vec domain (ar_syms f) -> domain ;
-        i_P : forall P : preds, vec domain (ar_preds P) -> Prop ;
-      }.
+    { i_f : forall f : syms, vec domain (ar_syms f) -> domain
+    ; i_P : forall P : preds, vec domain (ar_preds P) -> Prop
+    }.
 
     Definition env := nat -> domain.
 
     Context {I : interp }.
+
     Fixpoint eval (rho : env) (t : term) : domain :=
       match t with
       | var s => rho s
@@ -130,12 +130,11 @@ Section Tarski.
   Context {Σ_funcs : funcs_signature}.
   Context {Σ_preds : preds_signature}.
 
-  
+
   Variable D : Type.
   Variable I : interp D.
 
-  
-  
+
   Section Substs.
         
     Lemma eval_ext rho xi t :
@@ -308,6 +307,5 @@ Section Tarski.
     
 
   End Ext.
-
 
 End Tarski.
