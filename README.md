@@ -1,5 +1,7 @@
 # Tennenbaum's Theorem in Constructive Type Theory
 
+This is the Coq development accompanying the paper [*An Alalysis of Tennenbaum's Theorem in Constructive Type Theory*](https://drops.dagstuhl.de/opus/volltexte/2022/16290/).
+
 ## Compilation:
 
 - For the installation of Coq, more infos can be found [here](https://coq.inria.fr/download).
